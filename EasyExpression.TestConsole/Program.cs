@@ -1,36 +1,44 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EasyExpression;
+﻿
+using System;
+using System.Collections.Generic;
 
-namespace TestProject
+namespace EasyExpression.TestConsole
 {
-    [TestClass]
-    public class UnitTest1
+    internal class Program
     {
-        [TestMethod]
-        public void LogicTest()
+        static void Main(string[] args)
+        {
+            Console.WriteLine("LogicTest");
+            LogicTest();
+            Console.WriteLine("ArithmeticTest");
+            ArithmeticTest();
+            Console.WriteLine("ParamsTest");
+            ParamsTest();
+            Console.ReadLine();
+        }
+
+        static void LogicTest()
         {
             var expStr = "3 * (1 + 2) < = 5 || !(8 / (4 - 2) > [SUM](1,2,3))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Excute();
-            Assert.AreEqual(1d, value);
+            Console.WriteLine(value == 1d);
         }
 
-        [TestMethod]
-        public void ArithmeticTest()
+        static void ArithmeticTest()
         {
             var expStr = "3 * (1 + 2) + 5 - (30 / (4 - 2) % [SUM](1,2,3))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Excute();
-            Assert.AreEqual(11d,value);
+            Console.WriteLine(value == 11d);
         }
 
-        [TestMethod]
-        public void ParamsTest()
+        static void ParamsTest()
         {
             var expStr = "a * (b + c) + 5 - (30 / (d - 2) % [SUM](1,2,3))";
-            var dic = new Dictionary<string,string>
+            var dic = new Dictionary<string, string>
             {
                 { "a","3"},
                 { "b","1"},
@@ -40,7 +48,7 @@ namespace TestProject
             var exp = new Expression(expStr);
             exp.LoadArgument(dic);
             var value = exp.Excute();
-            Assert.AreEqual(11d, value);
+            Console.WriteLine(value == 11d);
         }
     }
 }
