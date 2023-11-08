@@ -82,6 +82,10 @@ namespace EasyExpression
             {
                 RealityString = v;
             }
+            else
+            {
+                RealityString = DataString;
+            }
             foreach (var childExp in ExpressionChildren)
             {
                 childExp.LoadArgument(keyValues);

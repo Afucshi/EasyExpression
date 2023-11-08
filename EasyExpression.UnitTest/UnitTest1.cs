@@ -1,7 +1,7 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EasyExpression;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
-namespace TestProject
+namespace EasyExpression.UnitTest
 {
     [TestClass]
     public class UnitTest1
@@ -23,14 +23,14 @@ namespace TestProject
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Excute();
-            Assert.AreEqual(11d,value);
+            Assert.AreEqual(11d, value);
         }
 
         [TestMethod]
         public void ParamsTest()
         {
             var expStr = "a * (b + c) + 5 - (30 / (d - 2) % [SUM](1,2,3))";
-            var dic = new Dictionary<string,string>
+            var dic = new Dictionary<string, string>
             {
                 { "a","3"},
                 { "b","1"},
