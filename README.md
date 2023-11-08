@@ -24,8 +24,11 @@
 
 ```
  var expStr = "3 * (1 + 2) < = 5 || !(8 / (4 - 2) > [SUM](1,2,3))";
+ // 解析表达式树
  var exp = new Expression(expStr);
+ // 把表达式中的数据加载到表达式对应的节点
  exp.LoadArgument();
+ // 按表达式树逐级执行结果
  var value = exp.Excute();
  ```
 - 算术表达式
@@ -49,6 +52,7 @@
     { "d","4"},
  };
  var exp = new Expression(expStr);
+ // 外部实参注入到表达式树中
  exp.LoadArgument(dic);
  var value = exp.Excute();
             
