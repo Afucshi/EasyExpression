@@ -22,7 +22,8 @@
 ### 示例
 - 逻辑表达式
 
-```var expStr = "3 * (1 + 2) < = 5 || !(8 / (4 - 2) > [SUM](1,2,3))";
+```
+ var expStr = "3 * (1 + 2) < = 5 || !(8 / (4 - 2) > [SUM](1,2,3))";
  var exp = new Expression(expStr);
  exp.LoadArgument();
  var value = exp.Excute();
@@ -33,5 +34,22 @@
  var expStr = "3 * (1 + 2) + 5 - (30 / (4 - 2) % [SUM](1,2,3))";
  var exp = new Expression(expStr);
  exp.LoadArgument();
-var value = exp.Excute();
+ var value = exp.Excute();
+```
+
+- 外部传入实参
+
+```
+ var expStr = "a * (b + c) + 5 - (30 / (d - 2) % [SUM](1,2,3))";
+ var dic = new Dictionary<string,string>
+ {
+    { "a","3"},
+    { "b","1"},
+    { "c","2"},
+    { "d","4"},
+ };
+ var exp = new Expression(expStr);
+ exp.LoadArgument(dic);
+ var value = exp.Excute();
+            
 ```
