@@ -24,5 +24,22 @@ namespace TestProject
             var value = exp.Excute();
             Assert.AreEqual(11d,value);
         }
+
+        [TestMethod]
+        public void ParamsTest()
+        {
+            var expStr = "a * (b + c) + 5 - (30 / (d - 2) % [SUM](1,2,3))";
+            var dic = new Dictionary<string,string>
+            {
+                { "a","3"},
+                { "b","1"},
+                { "c","2"},
+                { "d","4"},
+            };
+            var exp = new Expression(expStr);
+            exp.LoadArgument(dic);
+            var value = exp.Excute();
+            Assert.AreEqual(11d, value);
+        }
     }
 }
