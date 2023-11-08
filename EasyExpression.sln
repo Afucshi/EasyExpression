@@ -5,13 +5,13 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyExpression", "EasyExpression\EasyExpression.csproj", "{71C08266-BCEF-45CD-A9CF-C840101CB8B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProject", "TestProject\TestProject.csproj", "{9D1219A1-C67E-4C40-93A5-0B19CF446854}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{56C75974-A209-4F89-9AC4-D758D5B41CA6}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyExpression.UnitTest", "EasyExpression.UnitTest\EasyExpression.UnitTest.csproj", "{4CA1300E-C5E9-4CBF-BAA5-909F5F569ACE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{71C08266-BCEF-45CD-A9CF-C840101CB8B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71C08266-BCEF-45CD-A9CF-C840101CB8B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71C08266-BCEF-45CD-A9CF-C840101CB8B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9D1219A1-C67E-4C40-93A5-0B19CF446854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9D1219A1-C67E-4C40-93A5-0B19CF446854}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9D1219A1-C67E-4C40-93A5-0B19CF446854}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9D1219A1-C67E-4C40-93A5-0B19CF446854}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CA1300E-C5E9-4CBF-BAA5-909F5F569ACE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CA1300E-C5E9-4CBF-BAA5-909F5F569ACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CA1300E-C5E9-4CBF-BAA5-909F5F569ACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CA1300E-C5E9-4CBF-BAA5-909F5F569ACE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
