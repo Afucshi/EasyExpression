@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,13 +12,13 @@ namespace EasyExpression
             {
                 throw new Exception("表达式不能为空");
             }
-            SourceExpressionString = expression.Trim().Replace("||","|").Replace("&&","&").Replace("==","=").ToLower();
+            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=").ToLower();
             ExpressionChildren = new List<Expression>();
             Operators = new List<Operator>();
             DataString = string.Empty;
             RealityString = null;
             ExpressionType = ExpressionType.Unknown;
-            if (!TryParse()) 
+            if (!TryParse())
                 throw new Exception("表达式解析错误!");
         }
 
@@ -78,14 +77,42 @@ namespace EasyExpression
 
         public void LoadArgument(Dictionary<string, string> keyValues)
         {
-            if (keyValues.TryGetValue(DataString.Replace("\\", ""), out var v))
+            if (!string.IsNullOrEmpty(DataString))
             {
-                RealityString = v;
+                if (ElementType == ElementType.Function)
+                {
+                    var array = DataString.Split(',');
+                    var pList = new List<string>();
+                    foreach (var text in array)
+                    {
+                        if (keyValues.TryGetValue(text.Replace(" ", "").Replace("\\", "").ToLower(), out var v))
+                        {
+                            pList.Add(v);
+                        }
+                        else
+                        {
+                            pList.Add(text);
+                        }
+                    }
+                    RealityString = pList.Aggregate((a, b) => { return $"{a},{b}"; });
+                }
+                else
+                {
+                    if (keyValues.TryGetValue(DataString.Replace(" ", "").Replace("\\", "").ToLower(), out var v))
+                    {
+                        RealityString = v;
+                    }
+                    else
+                    {
+                        RealityString = DataString;
+                    }
+                }
             }
             else
             {
                 RealityString = DataString;
             }
+
             foreach (var childExp in ExpressionChildren)
             {
                 childExp.LoadArgument(keyValues);
@@ -94,7 +121,7 @@ namespace EasyExpression
 
         public void LoadArgument()
         {
-            if (ElementType == ElementType.Data || ElementType == ElementType.Function && !string.IsNullOrEmpty(DataString) && double.TryParse(DataString,out var _))
+            if (ElementType == ElementType.Data || ElementType == ElementType.Function && !string.IsNullOrEmpty(DataString) && double.TryParse(DataString, out var _))
             {
                 RealityString = DataString;
             }
@@ -155,9 +182,34 @@ namespace EasyExpression
                         {
                             throw new Exception($"不存在函数实例{childExp.ExecuteType}");
                         }
-                        var dataArray = childExp.RealityString.Split(',').ToArray() ?? throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                        var data = dataArray.Select(x => Convert.ToDouble(x)).ToArray();
-                        var v = childExp.Function.Invoke(data);
+                        double v = 0d;
+                        switch (childExp.ExecuteType)
+                        {
+                            case ExecuteType.None:
+                                v = childExp.Function.Invoke();
+                                break;
+                            case ExecuteType.Sum:
+                            case ExecuteType.Avg:
+                                var dataArray = childExp.RealityString.Split(',').ToArray() ?? throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                var data = dataArray.Select(x => Convert.ToDouble(x)).ToArray();
+                                v = childExp.Function.Invoke(data);
+                                break;
+                            case ExecuteType.Contains:
+                            case ExecuteType.ContainsExcept:
+                            case ExecuteType.Equals:
+                            case ExecuteType.StartWith:
+                            case ExecuteType.EndWith:
+                            case ExecuteType.Different:
+                                var paramArray = childExp.RealityString.Split(',').ToList();
+                                if (paramArray.Count != 2)
+                                {
+                                    throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                }
+                                v = childExp.Function.Invoke(paramArray[0], paramArray[1]);
+                                break;
+                            case ExecuteType.Customer:
+                                break;
+                        }
                         childrenResults.Add(v);
                         break;
                     default:
@@ -215,7 +267,7 @@ namespace EasyExpression
                         result = result < value ? 1d : 0d;
                         break;
                     case Operator.Equals:
-                        result = (result - value) < 0.001d ? 1d : 0d;
+                        result = result - value < 0.001d ? 1d : 0d;
                         break;
                     case Operator.GreaterThanOrEquals:
                         result = result >= value ? 1d : 0d;
@@ -293,7 +345,7 @@ namespace EasyExpression
                         var relationSymbolStr = GetFullSymbol(expression.SourceExpressionString, index);
                         ExpressionType = ExpressionType.Relation;
                         //去除可能存在的空字符
-                        var relationSymbol = ConvertOperator(relationSymbolStr.Replace(" ",""));
+                        var relationSymbol = ConvertOperator(relationSymbolStr.Replace(" ", ""));
                         expression.Operators.Add(relationSymbol);
                         expression.ElementType = ElementType.Expression;
                         //如果关系运算符为单字符，则索引+0，如果为多字符（<和=中间有空格，需要忽略掉），则跳过这段。eg: <；<=；<  =；
@@ -392,7 +444,7 @@ namespace EasyExpression
             return result;
         }
 
-        private static string GetFullData(string exp,int startIndex)
+        private static string GetFullData(string exp, int startIndex)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
@@ -415,7 +467,7 @@ namespace EasyExpression
                     case MatchMode.EscapeCharacter:
                         //跳过转义符及后面一个字符
                         result += exp[i];
-                        result += exp[i+1];
+                        result += exp[i + 1];
                         i++;
                         continue;
                     default:
@@ -432,6 +484,19 @@ namespace EasyExpression
                     return (ExecuteType.Sum, FormulaAction.Sum);
                 case "avg":
                     return (ExecuteType.Avg, FormulaAction.Avg);
+                case "contains":
+                    return (ExecuteType.Contains, FormulaAction.Contains);
+                case "excluding":
+                    return (ExecuteType.ContainsExcept, FormulaAction.Excluding);
+                case "equals":
+                    return (ExecuteType.Equals, FormulaAction.Equals);
+                case "startwith":
+                    return (ExecuteType.StartWith, FormulaAction.StartWith);
+                case "endwith":
+                    return (ExecuteType.EndWith, FormulaAction.EndWith);
+                case "different":
+                    return (ExecuteType.Different, FormulaAction.Different);
+                // 自定义函数实现
                 default:
                     throw new Exception($"{key} 函数未定义");
             }
@@ -444,7 +509,7 @@ namespace EasyExpression
             }
             else
             {
-                return !(Contains(expressionString,'(') 
+                return !(Contains(expressionString, '(')
                     || Contains(expressionString, '[')
                     || Contains(expressionString, '&')
                     || Contains(expressionString, '|')
@@ -761,7 +826,7 @@ namespace EasyExpression
                     }
                 }
             }
-            if (operators.Any())
+            if (operators.Count != 0)
             {
                 result.Add(operators);
             }

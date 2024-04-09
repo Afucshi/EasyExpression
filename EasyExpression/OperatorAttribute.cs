@@ -4,7 +4,7 @@ namespace EasyExpression
 {
     public class OperatorAttribute : Attribute
     {
-        public OperatorAttribute(string name,int level,string value)
+        public OperatorAttribute(string name, int level, string value)
         {
             Name = name;
             Level = level;

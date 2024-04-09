@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
 
 namespace EasyExpression
 {
@@ -11,12 +11,12 @@ namespace EasyExpression
         {
             using (var memStream = new MemoryStream())
             {
-                var bFormatter = new BinaryFormatter();
-                bFormatter.Serialize(memStream, obj);
+                var xmlSerializer = new XmlSerializer(typeof(T));
+                xmlSerializer.Serialize(memStream, obj);
                 memStream.Position = 0;
-
-                return (T)bFormatter.Deserialize(memStream);
+                return (T)xmlSerializer.Deserialize(memStream);
             }
+
         }
 
         public static OperatorAttribute GetOperatorObj(this Enum enumValue)
