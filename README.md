@@ -31,6 +31,23 @@
  // 按表达式树逐级执行结果
  var value = exp.Excute();
  ```
+
+  ```
+    var expStr = "a * (b + c) > d & [Contains](srcText,text)";
+    var dic = new Dictionary<string, string>
+    {
+        { "a","3"},
+        { "b","1"},
+        { "c","2"},
+        { "d","4"},
+        { "srcText","abc"},
+        { "text","bc"},
+    };
+    var exp = new Expression(expStr);
+    exp.LoadArgument(dic);
+    var value = exp.Excute();
+ ```
+
 - 算术表达式
 
  ```
