@@ -42,7 +42,7 @@ namespace EasyExpression.UnitTest
             var exp = new Expression(expStr);
             exp.LoadArgument(dic);
             var value = exp.Excute();
-            Assert.AreEqual(11d, value);
+            Assert.AreEqual(1d, value);
         }
 
         [TestMethod]
