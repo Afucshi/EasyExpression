@@ -27,6 +27,25 @@ namespace EasyExpression.UnitTest
         }
 
         [TestMethod]
+        public void StringTest()
+        {
+            var expStr = "a * (b + c) > d & [Contains](srcText,text)";
+            var dic = new Dictionary<string, string>
+            {
+                { "a","3"},
+                { "b","1"},
+                { "c","2"},
+                { "d","4"},
+                { "srcText","abc"},
+                { "text","bc"},
+            };
+            var exp = new Expression(expStr);
+            exp.LoadArgument(dic);
+            var value = exp.Excute();
+            Assert.AreEqual(11d, value);
+        }
+
+        [TestMethod]
         public void ParamsTest()
         {
             var expStr = "a * (b + c) + 5 - (30 / (d - 2) % [SUM](1,2,3))";

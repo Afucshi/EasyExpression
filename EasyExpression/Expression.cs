@@ -12,7 +12,7 @@ namespace EasyExpression
             {
                 throw new Exception("表达式不能为空");
             }
-            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=").ToLower();
+            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=");
             ExpressionChildren = new List<Expression>();
             Operators = new List<Operator>();
             DataString = string.Empty;
@@ -85,7 +85,7 @@ namespace EasyExpression
                     var pList = new List<string>();
                     foreach (var text in array)
                     {
-                        if (keyValues.TryGetValue(text.Replace(" ", "").Replace("\\", "").ToLower(), out var v))
+                        if (keyValues.TryGetValue(text, out var v))
                         {
                             pList.Add(v);
                         }
@@ -98,7 +98,7 @@ namespace EasyExpression
                 }
                 else
                 {
-                    if (keyValues.TryGetValue(DataString.Replace(" ", "").Replace("\\", "").ToLower(), out var v))
+                    if (keyValues.TryGetValue(DataString, out var v))
                     {
                         RealityString = v;
                     }
@@ -478,7 +478,7 @@ namespace EasyExpression
         }
         private static (ExecuteType executeType, Function function) GetFunctionType(string key)
         {
-            switch (key)
+            switch (key.ToLower())
             {
                 case "sum":
                     return (ExecuteType.Sum, FormulaAction.Sum);
