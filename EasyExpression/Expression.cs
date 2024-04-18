@@ -8,6 +8,27 @@ namespace EasyExpression
     {
         public Expression(string expression)
         {
+            Init(expression);
+        }
+
+        public Expression(string expression, Expression parent)
+        {
+            ParentExpression = parent;
+            Init(expression);
+        }
+
+        private Expression()
+        {
+            ExpressionChildren = new List<Expression>();
+            Operators = new List<Operator>();
+            DataString = string.Empty;
+            SourceExpressionString = string.Empty;
+            RealityString = null;
+            ExpressionType = ExpressionType.Unknown;
+        }
+
+        private void Init(string expression)
+        {
             if (string.IsNullOrEmpty(expression))
             {
                 throw new Exception("表达式不能为空");
@@ -20,16 +41,6 @@ namespace EasyExpression
             ExpressionType = ExpressionType.Unknown;
             if (!TryParse())
                 throw new Exception("表达式解析错误!");
-        }
-
-        private Expression()
-        {
-            ExpressionChildren = new List<Expression>();
-            Operators = new List<Operator>();
-            DataString = string.Empty;
-            SourceExpressionString = string.Empty;
-            RealityString = null;
-            ExpressionType = ExpressionType.Unknown;
         }
 
         /// <summary>
@@ -71,6 +82,7 @@ namespace EasyExpression
         /// 子表达式
         /// </summary>
         private List<Expression> ExpressionChildren { get; set; }
+        private Expression ParentExpression { get; set; }
         #endregion
 
         #region public method
@@ -376,11 +388,15 @@ namespace EasyExpression
                             ElementType = ElementType.Function,
                             ExecuteType = executeType,
                             Function = function,
+                            ParentExpression = expression,
                             SourceExpressionString = functionStr,
                             DataString = matchScope.ChildrenExpressionString
                         };
                         expression.ExpressionChildren.Add(functionExp);
-                        break;
+                        functionExp.ExpressionChildren.Add(new Expression(matchScope.ChildrenExpressionString, functionExp));
+                        //函数解析完毕后直接从函数后面位置继续
+                        index = matchScope.EndIndex;
+                        continue;
                     case MatchMode.Data:
                         var str = GetFullData(expression.SourceExpressionString, index);
                         if (!string.IsNullOrWhiteSpace(str))
@@ -396,6 +412,7 @@ namespace EasyExpression
                             {
                                 ExpressionType = ExpressionType.Logic;
                             }
+                            dataExp.ParentExpression = expression;
                             expression.ExpressionChildren.Add(dataExp);
                         }
                         index += str.Length - 1;
@@ -403,6 +420,12 @@ namespace EasyExpression
                     case MatchMode.EscapeCharacter:
                         //跳过转义符号
                         index++;
+                        continue;
+                    case MatchMode.Params:
+                        //todo
+                        matchScope = FindEnd(currentChar, endTag, expression.SourceExpressionString, index, true);
+                        expression.ExpressionChildren.Add(new Expression(matchScope.ChildrenExpressionString));
+                        index = matchScope.Status ? matchScope.EndIndex : expression.SourceExpressionString.Length - 1;
                         continue;
                     default:
                         break;
@@ -416,6 +439,7 @@ namespace EasyExpression
                 if (!isOver)
                 {
                     var expressionChildren = new Expression(matchScope.ChildrenExpressionString);
+                    expressionChildren.ParentExpression = expression;
                     expression.ExpressionChildren.Add(expressionChildren);
                 }
                 // 跳过已解析的块
@@ -423,7 +447,7 @@ namespace EasyExpression
             }
         }
 
-        private static string GetFullSymbol(string exp, int startIndex)
+        private string GetFullSymbol(string exp, int startIndex)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
@@ -444,7 +468,7 @@ namespace EasyExpression
             return result;
         }
 
-        private static string GetFullData(string exp, int startIndex)
+        private string GetFullData(string exp, int startIndex)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
@@ -545,9 +569,13 @@ namespace EasyExpression
             return false;
         }
 
-        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string formula, int index)
+        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string formula, int index, bool containsStartTag = false)
         {
             var result = (Status: true, EndIndex: 0, ChildrenExpressionString: "");
+            if (containsStartTag)
+            {
+                result.ChildrenExpressionString += startTag;
+            }
             try
             {
                 int currentLevel = 0;
@@ -592,7 +620,7 @@ namespace EasyExpression
             return result;
         }
 
-        private static (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar)
+        private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar)
         {
             switch (currentChar)
             {
@@ -625,6 +653,17 @@ namespace EasyExpression
                 case '\\':
                     return (MatchMode.EscapeCharacter, null);
                 default:
+                    if (ParentExpression != null && ParentExpression.ElementType == ElementType.Function)
+                    {
+                        if (currentChar == ',')
+                        {
+                            return (MatchMode.Params, null);
+                        }
+                        else
+                        {
+                            return (MatchMode.Params, ',');
+                        }
+                    }
                     return (MatchMode.Data, null);
             }
         }
