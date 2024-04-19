@@ -109,11 +109,7 @@
         /// <summary>
         /// 转义符
         /// </summary>
-        EscapeCharacter = 7,
-        /// <summary>
-        /// 参数模式
-        /// </summary>
-        Params = 8,
+        EscapeCharacter = 7
     }
 
     public enum Operator

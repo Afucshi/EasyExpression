@@ -19,28 +19,21 @@ namespace EasyExpression.UnitTest
         [TestMethod]
         public void MutipleFunctionTest()
         {
-            var expStr = "[SUM]([SUM](6,7,8),2,3)";
-
-            var expStr1 = "[SUM](1,[SUM](6,7,8),3)";
-
-            var expStr2 = "[SUM](1,2,[SUM](6,7,8))";
-
-            var expStr3 = "[SUM]([SUM](6,7,8),2,[SUM](6,7,8))";
-
-            var expStr4 = "[SUM]([SUM](6,7,8),[SUM](6,7,8),[SUM](6,7,8))";
-
+            var expStr = "[SUM]([SUM](1,2),[SUM](3,4),[AVG](5,6,7))";
             var exp = new Expression(expStr);
-            var exp1 = new Expression(expStr1);
-            var exp2 = new Expression(expStr2);
-            var exp3 = new Expression(expStr3);
-            var exp4 = new Expression(expStr4);
             exp.LoadArgument();
-            exp1.LoadArgument();
-            exp2.LoadArgument();
-            exp3.LoadArgument();
-            exp4.LoadArgument();
             var value = exp.Excute();
-            Assert.AreEqual(11d, value);
+            Assert.AreEqual(16d, value);
+        }
+
+        [TestMethod]
+        public void MutipleExpFunctionTest()
+        {
+            var expStr = "3 * (1 + 2) + [SUM]([SUM](1,2),6 / 2,[AVG](5,6,7))";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Excute();
+            Assert.AreEqual(21d, value);
         }
 
         [TestMethod]

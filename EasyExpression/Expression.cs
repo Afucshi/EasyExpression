@@ -177,56 +177,21 @@ namespace EasyExpression
          */
         public double Excute()
         {
+            var result = ExcuteChildren();
+            return result.First();
+        }
+
+        private List<double> ExcuteChildren()
+        {
             var childrenResults = new List<double>();
+            if (ExpressionChildren.Count == 0)
+            {
+                childrenResults.Add(ExcuteNode(this));
+                return childrenResults;
+            }
             foreach (var childExp in ExpressionChildren)
             {
-                switch (childExp.ElementType)
-                {
-                    case ElementType.Expression:
-                        childrenResults.Add(childExp.Excute());
-                        break;
-                    case ElementType.Data:
-                        var value = Convert2DoubleValue(childExp.RealityString);
-                        childrenResults.Add(value);
-                        break;
-                    case ElementType.Function:
-                        if (childExp.Function == null)
-                        {
-                            throw new Exception($"不存在函数实例{childExp.ExecuteType}");
-                        }
-                        double v = 0d;
-                        switch (childExp.ExecuteType)
-                        {
-                            case ExecuteType.None:
-                                v = childExp.Function.Invoke();
-                                break;
-                            case ExecuteType.Sum:
-                            case ExecuteType.Avg:
-                                var dataArray = childExp.RealityString.Split(',').ToArray() ?? throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                var data = dataArray.Select(x => Convert.ToDouble(x)).ToArray();
-                                v = childExp.Function.Invoke(data);
-                                break;
-                            case ExecuteType.Contains:
-                            case ExecuteType.ContainsExcept:
-                            case ExecuteType.Equals:
-                            case ExecuteType.StartWith:
-                            case ExecuteType.EndWith:
-                            case ExecuteType.Different:
-                                var paramArray = childExp.RealityString.Split(',').ToList();
-                                if (paramArray.Count != 2)
-                                {
-                                    throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                }
-                                v = childExp.Function.Invoke(paramArray[0], paramArray[1]);
-                                break;
-                            case ExecuteType.Customer:
-                                break;
-                        }
-                        childrenResults.Add(v);
-                        break;
-                    default:
-                        break;
-                }
+                childrenResults.Add(ExcuteNode(childExp));
             }
 
             /*
@@ -237,7 +202,10 @@ namespace EasyExpression
              * 
              * 【注】：因为针对优先级进行了表达式树的重构，所以每一层级的所有运算符都是同一优先级，因此，这里按照顺序执行即可
              */
-
+            if (Operators.Count == 0)
+            {
+                return childrenResults;
+            }
             var result = childrenResults.First();
             //计算逻辑与和逻辑或,顺序执行
             for (int i = 0; i < Operators.Count; i++)
@@ -291,34 +259,81 @@ namespace EasyExpression
                         break;
                 }
             }
-            return result;
+            childrenResults.Clear();
+            childrenResults.Add(result);
+            return childrenResults;
+        }
+
+        private double ExcuteNode(Expression childExp)
+        {
+            switch (childExp.ElementType)
+            {
+                case ElementType.Expression:
+                    return childExp.Excute();
+                case ElementType.Data:
+                    var value = Convert2DoubleValue(childExp.RealityString);
+                    return value;
+                case ElementType.Function:
+                    if (childExp.Function == null)
+                    {
+                        throw new Exception($"不存在函数实例{childExp.ExecuteType}");
+                    }
+                    double v = 0d;
+                    switch (childExp.ExecuteType)
+                    {
+                        case ExecuteType.None:
+                            v = childExp.Function.Invoke();
+                            break;
+                        case ExecuteType.Sum:
+                        case ExecuteType.Avg:
+                            var dataArray = childExp.RealityString?.Split(',').ToArray();
+                            if (dataArray == null)
+                            {
+                                if (childExp.ExpressionChildren.Count == 0)
+                                {
+                                    throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                }
+                                var paramList = new List<double>();
+                                foreach (var child in childExp.ExpressionChildren)
+                                {
+                                    child.ExcuteChildren().ForEach(x =>
+                                    {
+                                        paramList.Add(x);
+                                    });
+                                }
+                                v = childExp.Function.Invoke(paramList.ToArray());
+                            }
+                            else
+                            {
+                                var data = dataArray.Select(x => Convert.ToDouble(x)).ToArray();
+                                v = childExp.Function.Invoke(data);
+                            }
+                            break;
+                        case ExecuteType.Contains:
+                        case ExecuteType.ContainsExcept:
+                        case ExecuteType.Equals:
+                        case ExecuteType.StartWith:
+                        case ExecuteType.EndWith:
+                        case ExecuteType.Different:
+                            var paramArray = childExp.RealityString.Split(',').ToList();
+                            if (paramArray.Count != 2)
+                            {
+                                throw new Exception($"函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                            }
+                            v = childExp.Function.Invoke(paramArray[0], paramArray[1]);
+                            break;
+                        case ExecuteType.Customer:
+                            break;
+                    }
+                    return v;
+                default:
+                    throw new Exception("未知表达式节点");
+            }
         }
 
         #endregion
 
         #region private for parse
-
-        public List<KeyValuePair<string, ElementType>> ReplaceParams(Dictionary<string, object> keyValues)
-        {
-            var childrenResults = new List<KeyValuePair<string, ElementType>>();
-
-            foreach (var childExp in ExpressionChildren)
-            {
-                switch (childExp.ElementType)
-                {
-                    case ElementType.Expression:
-                        childrenResults.AddRange(childExp.GetAllParams());
-                        break;
-                    case ElementType.Function:
-                    case ElementType.Data:
-                    case ElementType.Reference:
-                        childrenResults.Add(new KeyValuePair<string, ElementType>(childExp.DataString.Replace("\\", ""), childExp.ElementType));
-                        break;
-                }
-            }
-            return childrenResults;
-        }
-
         private bool TryParse()
         {
             bool result;
@@ -333,7 +348,7 @@ namespace EasyExpression
                 //根据运算优先级，重组表达式树
                 RebuildExpression();
             }
-            catch
+            catch (Exception)
             {
                 result = false;
             }
@@ -393,7 +408,13 @@ namespace EasyExpression
                             DataString = matchScope.ChildrenExpressionString
                         };
                         expression.ExpressionChildren.Add(functionExp);
-                        functionExp.ExpressionChildren.Add(new Expression(matchScope.ChildrenExpressionString, functionExp));
+                        var paramList = SplitParamObject(matchScope.ChildrenExpressionString);
+                        paramList.ForEach(x =>
+                        {
+                            var paramExp = new Expression(x, functionExp);
+                            //functionExp.ExpressionChildren.AddRange(paramExp.ExpressionChildren);
+                            functionExp.ExpressionChildren.Add(paramExp);
+                        });
                         //函数解析完毕后直接从函数后面位置继续
                         index = matchScope.EndIndex;
                         continue;
@@ -407,12 +428,11 @@ namespace EasyExpression
                                 expression.DataString = str;
                                 return;
                             }
-                            var dataExp = new Expression(str);
+                            var dataExp = new Expression(str, expression);
                             if (dataExp.ExpressionType == ExpressionType.Logic)
                             {
                                 ExpressionType = ExpressionType.Logic;
                             }
-                            dataExp.ParentExpression = expression;
                             expression.ExpressionChildren.Add(dataExp);
                         }
                         index += str.Length - 1;
@@ -420,12 +440,6 @@ namespace EasyExpression
                     case MatchMode.EscapeCharacter:
                         //跳过转义符号
                         index++;
-                        continue;
-                    case MatchMode.Params:
-                        //todo
-                        matchScope = FindEnd(currentChar, endTag, expression.SourceExpressionString, index, true);
-                        expression.ExpressionChildren.Add(new Expression(matchScope.ChildrenExpressionString));
-                        index = matchScope.Status ? matchScope.EndIndex : expression.SourceExpressionString.Length - 1;
                         continue;
                     default:
                         break;
@@ -438,8 +452,7 @@ namespace EasyExpression
                 var isOver = ElementType == ElementType.Data || IsOver(matchScope.ChildrenExpressionString);
                 if (!isOver)
                 {
-                    var expressionChildren = new Expression(matchScope.ChildrenExpressionString);
-                    expressionChildren.ParentExpression = expression;
+                    var expressionChildren = new Expression(matchScope.ChildrenExpressionString, expression);
                     expression.ExpressionChildren.Add(expressionChildren);
                 }
                 // 跳过已解析的块
@@ -569,13 +582,18 @@ namespace EasyExpression
             return false;
         }
 
-        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string formula, int index, bool containsStartTag = false)
+        /// <summary>
+        /// 匹配标记范围（配对标记，比如( 和 ），[ 和 ]；start和end不能相同）
+        /// </summary>
+        /// <param name="startTag"></param>
+        /// <param name="endTag"></param>
+        /// <param name="formula"></param>
+        /// <param name="index"></param>
+        /// <param name="containsStartTag"></param>
+        /// <returns></returns>
+        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string formula, int index)
         {
             var result = (Status: true, EndIndex: 0, ChildrenExpressionString: "");
-            if (containsStartTag)
-            {
-                result.ChildrenExpressionString += startTag;
-            }
             try
             {
                 int currentLevel = 0;
@@ -620,6 +638,47 @@ namespace EasyExpression
             return result;
         }
 
+        private List<string> SplitParamObject(string srcString)
+        {
+            var result = new List<string>();
+            var paramString = string.Empty;
+            var areaLevel = 0;
+            for (int i = 0; i < srcString.Length; i++)
+            {
+                var currentChar = srcString[i];
+                //()或[]封闭空间内的参数分隔符 , 需要忽略，因为它属于子表达式范围，不用在本层级分析，只把它当作普通字符即可
+                switch (currentChar)
+                {
+                    case ',':
+                        if (!string.IsNullOrEmpty(paramString) && areaLevel == 0)
+                        {
+                            result.Add(paramString);
+                            paramString = string.Empty;
+                            continue;
+                        }
+                        break;
+                    case '(':
+                    case '[':
+                        //封闭空间开始,提升层级
+                        areaLevel++;
+                        break;
+                    case ')':
+                    case ']':
+                        //封闭空间结束,降低层级
+                        areaLevel--;
+                        break;
+                    default:
+                        break;
+                }
+                paramString += currentChar;
+            }
+            if (!string.IsNullOrEmpty(paramString))
+            {
+                result.Add(paramString);
+            }
+            return result;
+        }
+
         private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar)
         {
             switch (currentChar)
@@ -653,17 +712,6 @@ namespace EasyExpression
                 case '\\':
                     return (MatchMode.EscapeCharacter, null);
                 default:
-                    if (ParentExpression != null && ParentExpression.ElementType == ElementType.Function)
-                    {
-                        if (currentChar == ',')
-                        {
-                            return (MatchMode.Params, null);
-                        }
-                        else
-                        {
-                            return (MatchMode.Params, ',');
-                        }
-                    }
                     return (MatchMode.Data, null);
             }
         }
@@ -786,6 +834,7 @@ namespace EasyExpression
                     //合并为一个新的表达式
                     var newExp = BuildChildren(children, childrenOperators);
                     newExp.ExpressionType = type;
+                    newExp.ParentExpression = this;
                     //在表达式及操作符集合中删除合并的部分
                     ExpressionChildren.Insert(startIndex, newExp);
                     children.ForEach(x => ExpressionChildren.Remove(x));
