@@ -10,13 +10,6 @@ namespace EasyExpression
         {
             Init(expression);
         }
-
-        public Expression(string expression, Expression parent)
-        {
-            ParentExpression = parent;
-            Init(expression);
-        }
-
         private Expression()
         {
             ExpressionChildren = new List<Expression>();
@@ -82,7 +75,6 @@ namespace EasyExpression
         /// 子表达式
         /// </summary>
         private List<Expression> ExpressionChildren { get; set; }
-        private Expression ParentExpression { get; set; }
         #endregion
 
         #region public method
@@ -403,7 +395,6 @@ namespace EasyExpression
                             ElementType = ElementType.Function,
                             ExecuteType = executeType,
                             Function = function,
-                            ParentExpression = expression,
                             SourceExpressionString = functionStr,
                             DataString = matchScope.ChildrenExpressionString
                         };
@@ -411,7 +402,7 @@ namespace EasyExpression
                         var paramList = SplitParamObject(matchScope.ChildrenExpressionString);
                         paramList.ForEach(x =>
                         {
-                            var paramExp = new Expression(x, functionExp);
+                            var paramExp = new Expression(x);
                             //functionExp.ExpressionChildren.AddRange(paramExp.ExpressionChildren);
                             functionExp.ExpressionChildren.Add(paramExp);
                         });
@@ -428,7 +419,7 @@ namespace EasyExpression
                                 expression.DataString = str;
                                 return;
                             }
-                            var dataExp = new Expression(str, expression);
+                            var dataExp = new Expression(str);
                             if (dataExp.ExpressionType == ExpressionType.Logic)
                             {
                                 ExpressionType = ExpressionType.Logic;
@@ -452,7 +443,7 @@ namespace EasyExpression
                 var isOver = ElementType == ElementType.Data || IsOver(matchScope.ChildrenExpressionString);
                 if (!isOver)
                 {
-                    var expressionChildren = new Expression(matchScope.ChildrenExpressionString, expression);
+                    var expressionChildren = new Expression(matchScope.ChildrenExpressionString);
                     expression.ExpressionChildren.Add(expressionChildren);
                 }
                 // 跳过已解析的块
@@ -471,7 +462,7 @@ namespace EasyExpression
                     result += exp[i];
                     continue;
                 }
-                var (mode, endTag) = SetMatchMode(exp[i]);
+                var (mode, _) = SetMatchMode(exp[i]);
                 if (mode == MatchMode.RelationSymbol)
                 {
                     result += exp[i];
@@ -487,7 +478,7 @@ namespace EasyExpression
             var result = "" + exp[startIndex];
             for (int i = startIndex + 1; i < exp.Length; i++)
             {
-                var (mode, endTag) = SetMatchMode(exp[i]);
+                var (mode, _) = SetMatchMode(exp[i]);
                 switch (mode)
                 {
                     case MatchMode.Data:
@@ -834,7 +825,6 @@ namespace EasyExpression
                     //合并为一个新的表达式
                     var newExp = BuildChildren(children, childrenOperators);
                     newExp.ExpressionType = type;
-                    newExp.ParentExpression = this;
                     //在表达式及操作符集合中删除合并的部分
                     ExpressionChildren.Insert(startIndex, newExp);
                     children.ForEach(x => ExpressionChildren.Remove(x));
