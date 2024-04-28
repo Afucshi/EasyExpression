@@ -17,6 +17,9 @@
     <FileVersion>1.0.0.2</FileVersion>
     <Version>1.0.2</Version>
     <Description>支持逻辑表达式、算术表达式、条件表达式的解析及运算，支持自定义函数及函数嵌套，支持转义符</Description>
+    <PackageReleaseNotes>1. 新增!=关系运算符
+2. 函数关键字匹配忽略大小写
+3. 新增函数嵌套的支持</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
