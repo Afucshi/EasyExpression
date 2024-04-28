@@ -174,15 +174,20 @@
         [Operator("等于", 3, "=")]
         Equals = 11,
         /// <summary>
+        /// 不等于
+        /// </summary>
+        [Operator("不等于", 3, "!=")]
+        UnEquals = 12,
+        /// <summary>
         /// 大于等于
         /// </summary>
         [Operator("大于等于", 3, ">=")]
-        GreaterThanOrEquals = 12,
+        GreaterThanOrEquals = 13,
         /// <summary>
         /// 小于等于
         /// </summary>
         [Operator("小于等于", 3, "<=")]
-        LessThanOrEquals = 13,
+        LessThanOrEquals = 14,
     }
 
     public enum LogicalOperator

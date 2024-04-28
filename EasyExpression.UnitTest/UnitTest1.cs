@@ -37,6 +37,16 @@ namespace EasyExpression.UnitTest
         }
 
         [TestMethod]
+        public void UnEqualsTest()
+        {
+            var expStr = "4 != 4";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Excute();
+            Assert.AreEqual(0d, value);
+        }
+
+        [TestMethod]
         public void ArithmeticTest()
         {
             var expStr = "3 * (1 + 2) + 5 - (30 / (4 - 2) % [SUM](1,2,3))";

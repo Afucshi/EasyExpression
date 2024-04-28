@@ -239,7 +239,10 @@ namespace EasyExpression
                         result = result < value ? 1d : 0d;
                         break;
                     case Operator.Equals:
-                        result = result - value < 0.001d ? 1d : 0d;
+                        result = result - value < double.MinValue ? 1d : 0d;
+                        break;
+                    case Operator.UnEquals:
+                        result = result - value != 0 ? 1d : 0d;
                         break;
                     case Operator.GreaterThanOrEquals:
                         result = result >= value ? 1d : 0d;
@@ -371,10 +374,13 @@ namespace EasyExpression
                         index += relationSymbolStr.Length - 1;
                         continue;
                     case MatchMode.LogicSymbol:
-                        ExpressionType = ExpressionType.Logic;
-                        var logicSymbol = ConvertOperator(currentChar.ToString());
+                        var logicSymbolStr = GetFullSymbol(expression.SourceExpressionString, index);
+                        var logicSymbol = ConvertOperator(logicSymbolStr.Replace(" ", ""));
+                        //因为! 既可以单独修饰一个数据，当作逻辑非，也可以与=联合修饰两个数据，当作不等于，所以此处需要进行二次判定。如果是!=，则此符号为关系运算符
+                        ExpressionType = logicSymbol == Operator.UnEquals ? ExpressionType.Relation : ExpressionType.Logic;
                         expression.Operators.Add(logicSymbol);
                         expression.ElementType = ElementType.Expression;
+                        index += logicSymbolStr.Length - 1;
                         continue;
                     case MatchMode.ArithmeticSymbol:
                         ExpressionType = ExpressionType.Arithmetic;
@@ -467,6 +473,10 @@ namespace EasyExpression
                 {
                     result += exp[i];
                     break;
+                }
+                else if (mode == MatchMode.LogicSymbol && exp[i] == '!')
+                {
+                    result += exp[i]; break;
                 }
             }
             return result;
@@ -733,6 +743,8 @@ namespace EasyExpression
                     return Operator.LessThan;
                 case "=":
                     return Operator.Equals;
+                case "!=":
+                    return Operator.UnEquals;
                 case "<=":
                 case "=<":
                     return Operator.LessThanOrEquals;
