@@ -343,7 +343,7 @@ namespace EasyExpression
                 //根据运算优先级，重组表达式树
                 RebuildExpression();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 result = false;
             }
@@ -352,11 +352,12 @@ namespace EasyExpression
 
         private void Parse(Expression expression)
         {
+            var lastBlock = MatchMode.None;
             for (int index = 0; index < expression.SourceExpressionString.Length; index++)
             {
                 (bool Status, int EndIndex, string ChildrenExpressionString) matchScope = default;
                 var currentChar = expression.SourceExpressionString[index];
-                var (mode, endTag) = SetMatchMode(currentChar);
+                var (mode, endTag) = SetMatchMode(currentChar,lastBlock);
                 switch (mode)
                 {
                     case MatchMode.Scope:
@@ -364,7 +365,7 @@ namespace EasyExpression
                         expression.Status = matchScope.Status;
                         break;
                     case MatchMode.RelationSymbol:
-                        var relationSymbolStr = GetFullSymbol(expression.SourceExpressionString, index);
+                        var relationSymbolStr = GetFullSymbol(expression.SourceExpressionString, index, mode);
                         ExpressionType = ExpressionType.Relation;
                         //去除可能存在的空字符
                         var relationSymbol = ConvertOperator(relationSymbolStr.Replace(" ", ""));
@@ -372,21 +373,24 @@ namespace EasyExpression
                         expression.ElementType = ElementType.Expression;
                         //如果关系运算符为单字符，则索引+0，如果为多字符（<和=中间有空格，需要忽略掉），则跳过这段。eg: <；<=；<  =；
                         index += relationSymbolStr.Length - 1;
+                        lastBlock = mode;
                         continue;
                     case MatchMode.LogicSymbol:
-                        var logicSymbolStr = GetFullSymbol(expression.SourceExpressionString, index);
+                        var logicSymbolStr = GetFullSymbol(expression.SourceExpressionString, index, mode);
                         var logicSymbol = ConvertOperator(logicSymbolStr.Replace(" ", ""));
                         //因为! 既可以单独修饰一个数据，当作逻辑非，也可以与=联合修饰两个数据，当作不等于，所以此处需要进行二次判定。如果是!=，则此符号为关系运算符
                         ExpressionType = logicSymbol == Operator.UnEquals ? ExpressionType.Relation : ExpressionType.Logic;
                         expression.Operators.Add(logicSymbol);
                         expression.ElementType = ElementType.Expression;
                         index += logicSymbolStr.Length - 1;
+                        lastBlock = mode;
                         continue;
                     case MatchMode.ArithmeticSymbol:
                         ExpressionType = ExpressionType.Arithmetic;
                         var operatorSymbol = ConvertOperator(currentChar.ToString());
                         expression.Operators.Add(operatorSymbol);
                         expression.ElementType = ElementType.Expression;
+                        lastBlock = mode;
                         continue;
                     case MatchMode.Function:
                         matchScope = FindEnd('[', endTag, expression.SourceExpressionString, index);
@@ -414,9 +418,10 @@ namespace EasyExpression
                         });
                         //函数解析完毕后直接从函数后面位置继续
                         index = matchScope.EndIndex;
+                        lastBlock = mode;
                         continue;
                     case MatchMode.Data:
-                        var str = GetFullData(expression.SourceExpressionString, index);
+                        var str = GetFullData(expression.SourceExpressionString, index,lastBlock);
                         if (!string.IsNullOrWhiteSpace(str))
                         {
                             if (str.Equals(expression.SourceExpressionString))
@@ -433,10 +438,12 @@ namespace EasyExpression
                             expression.ExpressionChildren.Add(dataExp);
                         }
                         index += str.Length - 1;
+                        lastBlock = mode;
                         continue;
                     case MatchMode.EscapeCharacter:
                         //跳过转义符号
                         index++;
+                        lastBlock = mode;
                         continue;
                     default:
                         break;
@@ -454,10 +461,11 @@ namespace EasyExpression
                 }
                 // 跳过已解析的块
                 index = matchScope.EndIndex;
+                lastBlock = mode;
             }
         }
 
-        private string GetFullSymbol(string exp, int startIndex)
+        private string GetFullSymbol(string exp, int startIndex, MatchMode matchMode)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
@@ -468,31 +476,34 @@ namespace EasyExpression
                     result += exp[i];
                     continue;
                 }
-                var (mode, _) = SetMatchMode(exp[i]);
-                if (mode == MatchMode.RelationSymbol)
+                var (mode, _) = SetMatchMode(exp[i], matchMode);
+                if (mode == MatchMode.RelationSymbol && matchMode == MatchMode.RelationSymbol)
                 {
                     result += exp[i];
                     break;
                 }
-                else if (mode == MatchMode.LogicSymbol && exp[i] == '!')
+                else if (mode == MatchMode.LogicSymbol && exp[startIndex] == '!' && matchMode == MatchMode.LogicSymbol)
                 {
-                    result += exp[i]; break;
+                    result += exp[i]; 
+                    break;
                 }
+                matchMode = mode;
             }
             return result;
         }
 
-        private string GetFullData(string exp, int startIndex)
+        private string GetFullData(string exp, int startIndex,MatchMode matchMode)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
             for (int i = startIndex + 1; i < exp.Length; i++)
             {
-                var (mode, _) = SetMatchMode(exp[i]);
+                var (mode, _) = SetMatchMode(exp[i], matchMode);
                 switch (mode)
                 {
                     case MatchMode.Data:
                         result += exp[i];
+                        matchMode = mode;
                         continue;
                     case MatchMode.LogicSymbol:
                         return result;
@@ -507,6 +518,7 @@ namespace EasyExpression
                         result += exp[i];
                         result += exp[i + 1];
                         i++;
+                        matchMode = mode;
                         continue;
                     default:
                         return result;
@@ -680,7 +692,7 @@ namespace EasyExpression
             return result;
         }
 
-        private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar)
+        private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar,MatchMode lastMode)
         {
             switch (currentChar)
             {
@@ -697,6 +709,11 @@ namespace EasyExpression
                 case '+':
                     return (MatchMode.ArithmeticSymbol, null);
                 case '-':
+                    //有可能是负号，也有可能是减号;上一个block是符号或者none，这此处应该当作负号处理
+                    if (lastMode == MatchMode.None || lastMode == MatchMode.ArithmeticSymbol || lastMode == MatchMode.LogicSymbol || lastMode == MatchMode.RelationSymbol)
+                    {
+                        return (MatchMode.Data, null);
+                    }
                     return (MatchMode.ArithmeticSymbol, null);
                 case '*':
                     return (MatchMode.ArithmeticSymbol, null);
@@ -709,6 +726,13 @@ namespace EasyExpression
                 case '>':
                     return (MatchMode.RelationSymbol, null);
                 case '=':
+                    /*=继承上一个相邻符号的类型，比如<=,>=，此时=号为关系运算符；上一个为逻辑运算符的话，此处=为逻辑运算符，比如 !=；如果上一个block不为符号，那么此时=为等于（关系运算符）
+                     因此，只有上一个block为逻辑运算符时，才返回logicSymbol，其他情况返回relationSymbol
+                     */
+                    if (lastMode == MatchMode.LogicSymbol)
+                    {
+                        return (MatchMode.LogicSymbol,null);
+                    }
                     return (MatchMode.RelationSymbol, null);
                 case '\\':
                     return (MatchMode.EscapeCharacter, null);

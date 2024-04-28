@@ -83,6 +83,10 @@
     public enum MatchMode
     {
         /// <summary>
+        /// 未知模式
+        /// </summary>
+        None = 0,
+        /// <summary>
         /// 数据
         /// </summary>
         Data = 1,

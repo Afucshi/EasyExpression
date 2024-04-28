@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>EasyExpression</Title>
-    <PackageIcon>EasyExpression.png</PackageIcon>
+    <PackageIcon></PackageIcon>
     <PackageProjectUrl>https://github.com/Afucshi/EasyExpression</PackageProjectUrl>
     <Copyright>MIT</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,10 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\..\Desktop\EasyExpression.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

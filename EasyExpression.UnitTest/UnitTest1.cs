@@ -6,6 +6,17 @@ namespace EasyExpression.UnitTest
     [TestClass]
     public class UnitTest1
     {
+
+        [TestMethod]
+        public void NegativeTest()
+        {
+            var expStr = "3 * -2";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Excute();
+            Assert.AreEqual(-6d, value);
+        }
+
         [TestMethod]
         public void LogicTest()
         {
@@ -53,6 +64,7 @@ namespace EasyExpression.UnitTest
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Excute();
+
             Assert.AreEqual(11d, value);
         }
 
