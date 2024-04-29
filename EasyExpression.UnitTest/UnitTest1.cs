@@ -6,6 +6,15 @@ namespace EasyExpression.UnitTest
     [TestClass]
     public class UnitTest1
     {
+        [TestMethod]
+        public void ParseTest()
+        {
+            var expStr = " 2 + 3* -3 > -9 || [SUM] (1,2,3) < 4";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Excute();
+            Assert.AreEqual(1d, value);
+        }
 
         [TestMethod]
         public void NegativeTest()

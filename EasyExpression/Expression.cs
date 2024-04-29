@@ -343,7 +343,7 @@ namespace EasyExpression
                 //根据运算优先级，重组表达式树
                 RebuildExpression();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 result = false;
             }
@@ -357,7 +357,7 @@ namespace EasyExpression
             {
                 (bool Status, int EndIndex, string ChildrenExpressionString) matchScope = default;
                 var currentChar = expression.SourceExpressionString[index];
-                var (mode, endTag) = SetMatchMode(currentChar,lastBlock);
+                var (mode, endTag) = SetMatchMode(currentChar, lastBlock);
                 switch (mode)
                 {
                     case MatchMode.Scope:
@@ -421,7 +421,7 @@ namespace EasyExpression
                         lastBlock = mode;
                         continue;
                     case MatchMode.Data:
-                        var str = GetFullData(expression.SourceExpressionString, index,lastBlock);
+                        var str = GetFullData(expression.SourceExpressionString, index, lastBlock);
                         if (!string.IsNullOrWhiteSpace(str))
                         {
                             if (str.Equals(expression.SourceExpressionString))
@@ -484,7 +484,7 @@ namespace EasyExpression
                 }
                 else if (mode == MatchMode.LogicSymbol && exp[startIndex] == '!' && matchMode == MatchMode.LogicSymbol)
                 {
-                    result += exp[i]; 
+                    result += exp[i];
                     break;
                 }
                 matchMode = mode;
@@ -492,7 +492,7 @@ namespace EasyExpression
             return result;
         }
 
-        private string GetFullData(string exp, int startIndex,MatchMode matchMode)
+        private string GetFullData(string exp, int startIndex, MatchMode matchMode)
         {
             if (startIndex == exp.Length) return exp.Last() + "";
             var result = "" + exp[startIndex];
@@ -692,7 +692,7 @@ namespace EasyExpression
             return result;
         }
 
-        private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar,MatchMode lastMode)
+        private (MatchMode Mode, char? EndTag) SetMatchMode(char currentChar, MatchMode lastMode)
         {
             switch (currentChar)
             {
@@ -731,7 +731,7 @@ namespace EasyExpression
                      */
                     if (lastMode == MatchMode.LogicSymbol)
                     {
-                        return (MatchMode.LogicSymbol,null);
+                        return (MatchMode.LogicSymbol, null);
                     }
                     return (MatchMode.RelationSymbol, null);
                 case '\\':
@@ -889,12 +889,16 @@ namespace EasyExpression
         private static Expression BuildChildren(List<Expression> expressions, List<Operator> operators)
         {
             var dataString = expressions[0].DataString;
+            if (expressions[0].ElementType == ElementType.Expression || expressions[0].ElementType == ElementType.Function)
+            {
+                dataString = $"({expressions[0].SourceExpressionString})";
+            }
             for (int i = 1; i < expressions.Count; i++)
             {
                 var childStr = expressions[i].DataString;
                 if (expressions[i].ElementType == ElementType.Expression)
                 {
-                    childStr = $"({expressions[i].SourceExpressionString})";
+                    childStr = $"{expressions[i].SourceExpressionString}";
                 }
                 dataString += $"{operators[i - 1].GetOperatorObj().Value}{childStr}";
             }
