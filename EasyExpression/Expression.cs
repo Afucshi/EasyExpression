@@ -889,9 +889,9 @@ namespace EasyExpression
         private static Expression BuildChildren(List<Expression> expressions, List<Operator> operators)
         {
             var dataString = expressions[0].DataString;
-            if (expressions[0].ElementType == ElementType.Expression || expressions[0].ElementType == ElementType.Function)
+            if (expressions[0].ElementType == ElementType.Function)
             {
-                dataString = $"({expressions[0].SourceExpressionString})";
+                dataString = $"{expressions[0].SourceExpressionString}";
             }
             for (int i = 1; i < expressions.Count; i++)
             {
