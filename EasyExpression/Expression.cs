@@ -26,7 +26,7 @@ namespace EasyExpression
             {
                 throw new Exception("表达式不能为空");
             }
-            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=");
+            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=").Replace("!!", "");
             ExpressionChildren = new List<Expression>();
             Operators = new List<Operator>();
             DataString = string.Empty;
@@ -154,6 +154,34 @@ namespace EasyExpression
                 }
             }
             return childrenResults;
+        }
+
+        /// <summary>
+        /// 判断表达式完备性
+        /// </summary>
+        public void Check()
+        {
+            CheckExpression(this);
+        }
+
+        private void CheckExpression(Expression expression)
+        {
+            /*
+             * 1. 除了非运算只需要一个数据，其他的运算符至少需要2个数据
+             */
+            if (expression.Operators.Any())
+            {
+                var notOperatorCount = expression.Operators.Count(x => x == Operator.Not);
+                if (expression.ExpressionChildren.Count - (expression.Operators.Count - notOperatorCount) != 1)
+                {
+                    throw new Exception("expression check error: data not match operator");
+                }
+            }
+
+            foreach (var child in expression.ExpressionChildren)
+            {
+                CheckExpression(child);
+            }
         }
 
         /*
