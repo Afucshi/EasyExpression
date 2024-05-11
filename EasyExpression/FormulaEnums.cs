@@ -135,7 +135,7 @@
         /// <summary>
         /// 非(!)
         /// </summary>
-        [Operator("非", 2, "!")]
+        [Operator("非", 6, "!")]
         Not = 3,
         ///<summary>
         ///加
@@ -192,6 +192,8 @@
         /// </summary>
         [Operator("小于等于", 3, "<=")]
         LessThanOrEquals = 14,
+        [Operator("负", 6, "!")]
+        Negative = 15,
     }
 
     public enum LogicalOperator

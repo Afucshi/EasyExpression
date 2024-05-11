@@ -12,7 +12,7 @@ namespace EasyExpression.UnitTest
             var expStr = " 2 + 3* -3 > -9 || [SUM] (1,2,3) < 4";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(1d, value);
         }
 
@@ -22,7 +22,7 @@ namespace EasyExpression.UnitTest
             var expStr = "3 * -2";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(-6d, value);
         }
 
@@ -32,7 +32,7 @@ namespace EasyExpression.UnitTest
             var expStr = "3 * (1 + 2) < = 5 || !(8 / (4 - 2) > [SUM](1,2,3))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(1d, value);
         }
 
@@ -42,7 +42,7 @@ namespace EasyExpression.UnitTest
             var expStr = "[SUM]([SUM](1,2),[SUM](3,4),[AVG](5,6,7))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(16d, value);
         }
 
@@ -52,7 +52,7 @@ namespace EasyExpression.UnitTest
             var expStr = "3 * (1 + 2) + [SUM]([SUM](1,2),6 / 2,[AVG](5,6,7))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(21d, value);
         }
 
@@ -62,7 +62,7 @@ namespace EasyExpression.UnitTest
             var expStr = "4 != 4";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(0d, value);
         }
 
@@ -72,7 +72,7 @@ namespace EasyExpression.UnitTest
             var expStr = "3 * (1 + 2) + 5 - (30 / (4 - 2) % [SUM](1,2,3))";
             var exp = new Expression(expStr);
             exp.LoadArgument();
-            var value = exp.Excute();
+            var value = exp.Execute();
 
             Assert.AreEqual(11d, value);
         }
@@ -92,7 +92,7 @@ namespace EasyExpression.UnitTest
             };
             var exp = new Expression(expStr);
             exp.LoadArgument(dic);
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(1d, value);
         }
 
@@ -109,7 +109,7 @@ namespace EasyExpression.UnitTest
             };
             var exp = new Expression(expStr);
             exp.LoadArgument(dic);
-            var value = exp.Excute();
+            var value = exp.Execute();
             Assert.AreEqual(11d, value);
         }
     }
