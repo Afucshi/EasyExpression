@@ -566,6 +566,7 @@ namespace EasyExpression
                     result += exp[i];
                     break;
                 }
+                if (mode == MatchMode.Data) break;
                 matchMode = mode;
             }
             return result;
