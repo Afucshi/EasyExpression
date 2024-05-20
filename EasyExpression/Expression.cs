@@ -306,7 +306,7 @@ namespace EasyExpression
                         result = result < value ? 1d : 0d;
                         break;
                     case Operator.Equals:
-                        result = result - value < double.MinValue ? 1d : 0d;
+                        result = result - value == 0 ? 1d : 0d;
                         break;
                     case Operator.UnEquals:
                         result = result - value != 0 ? 1d : 0d;
