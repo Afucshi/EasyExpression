@@ -351,14 +351,9 @@ namespace EasyExpression
                             break;
                         case ExecuteType.Sum:
                         case ExecuteType.Avg:
-                            var dataArray = childExp.RealityString?.Split(',').ToArray();
-                            if (dataArray == null)
+                            var paramList = new List<double>();
+                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
                             {
-                                if (childExp.ExpressionChildren.Count == 0)
-                                {
-                                    throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                }
-                                var paramList = new List<double>();
                                 foreach (var child in childExp.ExpressionChildren)
                                 {
                                     child.ExecuteChildren().ForEach(x =>
@@ -366,13 +361,13 @@ namespace EasyExpression
                                         paramList.Add(x);
                                     });
                                 }
-                                v = childExp.Function.Invoke(paramList.ToArray());
                             }
                             else
                             {
-                                var data = dataArray.Select(x => Convert.ToDouble(x)).ToArray();
-                                v = childExp.Function.Invoke(data);
+                                var dataArray = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramList = dataArray.Select(x => Convert.ToDouble(x)).ToList();
                             }
+                            v = childExp.Function.Invoke(paramList.ToArray());
                             break;
                         case ExecuteType.Contains:
                         case ExecuteType.ContainsExcept:
@@ -380,27 +375,26 @@ namespace EasyExpression
                         case ExecuteType.StartWith:
                         case ExecuteType.EndWith:
                         case ExecuteType.Different:
-                            var paramArray = childExp.RealityString?.Split(',').ToList();
-                            if (paramArray == null)
+                            var paramsList = new List<string>();
+                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
                             {
-                                paramArray = new List<string>();
-                                if (childExp.ExpressionChildren.Count == 0)
-                                {
-                                    throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                }
                                 foreach (var child in childExp.ExpressionChildren)
                                 {
                                     child.ExecuteChildren().ForEach(x =>
                                     {
-                                        paramArray.Add(x.ToString());
+                                        paramsList.Add(x.ToString());
                                     });
                                 }
                             }
-                            if (paramArray.Count != 2)
+                            else
+                            {
+                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                            }
+                            if (paramsList.Count != 2)
                             {
                                 throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
                             }
-                            v = childExp.Function.Invoke(paramArray.ToArray());
+                            v = childExp.Function.Invoke(paramsList.ToArray());
                             break;
                         case ExecuteType.Customer:
                             break;
