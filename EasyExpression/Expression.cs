@@ -380,12 +380,23 @@ namespace EasyExpression
                         case ExecuteType.StartWith:
                         case ExecuteType.EndWith:
                         case ExecuteType.Different:
-                            var paramArray = childExp.RealityString.Split(',').ToList();
-                            if (paramArray.Count != 2)
+                            var paramArray = childExp.RealityString?.Split(',').ToList();
+                            if (paramArray == null)
                             {
-                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramArray = new List<string>();
+                                if (childExp.ExpressionChildren.Count == 0)
+                                {
+                                    throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                }
+                                foreach (var child in childExp.ExpressionChildren)
+                                {
+                                    child.ExecuteChildren().ForEach(x =>
+                                    {
+                                        paramArray.Add(x.ToString());
+                                    });
+                                }
                             }
-                            v = childExp.Function.Invoke(paramArray[0], paramArray[1]);
+                            v = childExp.Function.Invoke(paramArray.ToArray());
                             break;
                         case ExecuteType.Customer:
                             break;

@@ -57,8 +57,19 @@ namespace EasyExpression.UnitTest
         }
 
         [TestMethod]
+        public void FunctionParamsTest()
+        {
+            var expStr = "[EQUALS](12+3,15)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(1d, value);
+        }
+
+        [TestMethod]
         public void UnEqualsTest()
         {
+
             var expStr = "4 != 4";
             var exp = new Expression(expStr);
             exp.LoadArgument();
