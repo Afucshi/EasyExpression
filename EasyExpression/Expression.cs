@@ -396,6 +396,10 @@ namespace EasyExpression
                                     });
                                 }
                             }
+                            if (paramArray.Count != 2)
+                            {
+                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                            }
                             v = childExp.Function.Invoke(paramArray.ToArray());
                             break;
                         case ExecuteType.Customer:
