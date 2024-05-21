@@ -85,37 +85,33 @@ namespace EasyExpression
         public List<KeyValuePair<string, string>> LoadArgument(Dictionary<string, string> keyValues)
         {
             var result = new List<KeyValuePair<string, string>>();
-            LoadArgument(keyValues, result);
+            LoadArgument(keyValues, result, ElementType == ElementType.Function);
             return result;
         }
 
-        private void LoadArgument(Dictionary<string, string> keyValues, List<KeyValuePair<string, string>> result)
+        private void LoadArgument(Dictionary<string, string> keyValues, List<KeyValuePair<string, string>> result, bool zeroInit = false)
         {
             if (!string.IsNullOrEmpty(DataString))
             {
                 if (ElementType == ElementType.Function)
                 {
-                    var array = DataString.Split(',');
-                    var pList = new List<string>();
-                    foreach (var text in array)
+                    var allParams = GetAllParams();
+                    foreach (var param in allParams)
                     {
-                        if (keyValues.TryGetValue(text, out var v))
+                        if (keyValues.TryGetValue(param.Key, out var v))
                         {
-                            pList.Add(v);
-                        }
-                        else
-                        {
-                            pList.Add(text);
+                            DataString = DataString.Replace(param.Key, string.IsNullOrEmpty(v) ? "0" : v);
                         }
                     }
-                    RealityString = pList.Aggregate((a, b) => { return $"{a},{b}"; });
+                    RealityString = DataString;
+                    zeroInit = ExecuteType == ExecuteType.Avg || ExecuteType == ExecuteType.Sum;
                 }
                 else
                 {
                     if (keyValues.TryGetValue(DataString, out var v))
                     {
-                        RealityString = v;
-                        result.Add(new KeyValuePair<string, string>(DataString, v));
+                        RealityString = string.IsNullOrEmpty(v) && zeroInit ? "0" : v;
+                        result.Add(new KeyValuePair<string, string>(DataString, RealityString));
                     }
                     else
                     {
@@ -130,7 +126,7 @@ namespace EasyExpression
 
             foreach (var childExp in ExpressionChildren)
             {
-                childExp.LoadArgument(keyValues, result);
+                childExp.LoadArgument(keyValues, result, zeroInit);
             }
         }
 
@@ -306,7 +302,7 @@ namespace EasyExpression
                         result = result < value ? 1d : 0d;
                         break;
                     case Operator.Equals:
-                        result = result - value < double.MinValue ? 1d : 0d;
+                        result = result == value ? 1d : 0d;
                         break;
                     case Operator.UnEquals:
                         result = result - value != 0 ? 1d : 0d;
