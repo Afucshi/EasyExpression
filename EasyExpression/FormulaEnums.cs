@@ -20,23 +20,6 @@
         Reference = 3,
     }
 
-    public enum ExpressionType
-    {
-        Unknown = 0,
-        /// <summary>
-        /// 逻辑表达式
-        /// </summary>
-        Logic = 1,
-        /// <summary>
-        /// 算术表达式
-        /// </summary>
-        Arithmetic = 2,
-        /// <summary>
-        /// 关系表达式
-        /// </summary>
-        Relation = 3
-    }
-
     public enum ExecuteType
     {
         /// <summary>
