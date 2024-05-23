@@ -17,7 +17,6 @@ namespace EasyExpression
             DataString = string.Empty;
             SourceExpressionString = string.Empty;
             RealityString = null;
-            ExpressionType = ExpressionType.Unknown;
         }
 
         private void Init(string expression)
@@ -31,17 +30,11 @@ namespace EasyExpression
             Operators = new List<Operator>();
             DataString = string.Empty;
             RealityString = null;
-            ExpressionType = ExpressionType.Unknown;
             if (!TryParse())
                 throw new ExpressionException($"表达式: {SourceExpressionString} 解析错误!");
         }
 
         public string ErrorMessgage { get; set; }
-
-        /// <summary>
-        /// 表达式类型
-        /// </summary>
-        public ExpressionType ExpressionType { get; set; }
 
         #region private properties
         /// <summary>
@@ -150,24 +143,21 @@ namespace EasyExpression
             CheckExpression(this);
         }
 
-        private void CheckExpression(Expression expression)
+        /*
+        * 运算优先级从高到低为：
+        * 小括号：()
+        * 非：!
+        * 乘除：* /
+        * 加减：+ -
+        * 关系运算符：< > =
+        * 逻辑运算符：& ||
+        * 
+        * 如果是逻辑表达式，则返回值只有0或1，分别代表false和true
+        */
+        public double Execute()
         {
-            /*
-             * 1. 除了非运算只需要一个数据，其他的运算符至少需要2个数据
-             */
-            if (expression.Operators.Any())
-            {
-                var notOperatorCount = expression.Operators.Count(x => x == Operator.Not);
-                if (expression.ExpressionChildren.Count - (expression.Operators.Count - notOperatorCount) != 1)
-                {
-                    throw new ExpressionException("expression check error: data not match operator");
-                }
-            }
-
-            foreach (var child in expression.ExpressionChildren)
-            {
-                CheckExpression(child);
-            }
+            var result = ExecuteChildren();
+            return result.First();
         }
 
         public List<KeyValuePair<string, ElementType>> GetAllParams()
@@ -219,191 +209,9 @@ namespace EasyExpression
             return childrenResults;
         }
 
-        /*
-         * 运算优先级从高到低为：
-         * 小括号：()
-         * 非：!
-         * 乘除：* /
-         * 加减：+ -
-         * 关系运算符：< > =
-         * 逻辑运算符：& ||
-         * 
-         * 如果是逻辑表达式，则返回值只有0或1，分别代表false和true
-         */
-        public double Execute()
-        {
-            var result = ExecuteChildren();
-            return result.First();
-        }
-
-        private List<double> ExecuteChildren()
-        {
-            var childrenResults = new List<double>();
-            if (ExpressionChildren.Count == 0)
-            {
-                childrenResults.Add(ExecuteNode(this));
-                return childrenResults;
-            }
-            foreach (var childExp in ExpressionChildren)
-            {
-                childrenResults.Add(ExecuteNode(childExp));
-            }
-
-            /*
-             * 优先级
-             * 1. 算术运算
-             * 2. 关系运算
-             * 3. 逻辑运算
-             * 
-             * 【注】：因为针对优先级进行了表达式树的重构，所以每一层级的所有运算符都是同一优先级，因此，这里按照顺序执行即可
-             */
-            if (Operators.Count == 0)
-            {
-                return childrenResults;
-            }
-            var result = childrenResults.First();
-            //计算逻辑与和逻辑或,顺序执行
-            for (int i = 0; i < Operators.Count; i++)
-            {
-                //非运算和负数特殊，它只需要一个操作数就可完成计算，其他运算符至少需要两个
-                var value = Operators[i] == Operator.Not || Operators[i] == Operator.Negative ? childrenResults[i] : childrenResults[i + 1];
-                switch (Operators[i])
-                {
-                    case Operator.None:
-                        break;
-                    case Operator.And:
-                        result = result != 0d && value != 0d ? 1d : 0d;
-                        break;
-                    case Operator.Or:
-                        result = result != 0d || value != 0d ? 1d : 0d;
-                        break;
-                    case Operator.Not:
-                        result = value != 0d ? 0d : 1d;
-                        break;
-                    case Operator.Plus:
-                        result += value;
-                        break;
-                    case Operator.Subtract:
-                        result -= value;
-                        break;
-                    case Operator.Multiply:
-                        result *= value;
-                        break;
-                    case Operator.Divide:
-                        result /= value;
-                        break;
-                    case Operator.Mod:
-                        result %= value;
-                        break;
-                    case Operator.GreaterThan:
-                        result = result > value ? 1d : 0d;
-                        break;
-                    case Operator.LessThan:
-                        result = result < value ? 1d : 0d;
-                        break;
-                    case Operator.Equals:
-                        result = result == value ? 1d : 0d;
-                        break;
-                    case Operator.UnEquals:
-                        result = result - value != 0 ? 1d : 0d;
-                        break;
-                    case Operator.GreaterThanOrEquals:
-                        result = result >= value ? 1d : 0d;
-                        break;
-                    case Operator.LessThanOrEquals:
-                        result = result <= value ? 1d : 0d;
-                        break;
-                    case Operator.Negative:
-                        result = value * -1;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            childrenResults.Clear();
-            childrenResults.Add(result);
-            return childrenResults;
-        }
-
-        private double ExecuteNode(Expression childExp)
-        {
-            switch (childExp.ElementType)
-            {
-                case ElementType.Expression:
-                    return childExp.Execute();
-                case ElementType.Data:
-                    var value = Convert2DoubleValue(childExp.RealityString);
-                    return value;
-                case ElementType.Function:
-                    if (childExp.Function == null)
-                    {
-                        throw new ExpressionException($"at {SourceExpressionString}: 不存在函数实例{childExp.ExecuteType}");
-                    }
-                    double v = 0d;
-                    switch (childExp.ExecuteType)
-                    {
-                        case ExecuteType.None:
-                            v = childExp.Function.Invoke();
-                            break;
-                        case ExecuteType.Sum:
-                        case ExecuteType.Avg:
-                            var paramList = new List<double>();
-                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
-                            {
-                                foreach (var child in childExp.ExpressionChildren)
-                                {
-                                    child.ExecuteChildren().ForEach(x =>
-                                    {
-                                        paramList.Add(x);
-                                    });
-                                }
-                            }
-                            else
-                            {
-                                var dataArray = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                paramList = dataArray.Select(x => Convert.ToDouble(x)).ToList();
-                            }
-                            v = childExp.Function.Invoke(paramList.ToArray());
-                            break;
-                        case ExecuteType.Contains:
-                        case ExecuteType.ContainsExcept:
-                        case ExecuteType.Equals:
-                        case ExecuteType.StartWith:
-                        case ExecuteType.EndWith:
-                        case ExecuteType.Different:
-                            var paramsList = new List<string>();
-                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
-                            {
-                                foreach (var child in childExp.ExpressionChildren)
-                                {
-                                    child.ExecuteChildren().ForEach(x =>
-                                    {
-                                        paramsList.Add(x.ToString());
-                                    });
-                                }
-                            }
-                            else
-                            {
-                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                            }
-                            if (paramsList.Count != 2)
-                            {
-                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                            }
-                            v = childExp.Function.Invoke(paramsList.ToArray());
-                            break;
-                        case ExecuteType.Customer:
-                            break;
-                    }
-                    return v;
-                default:
-                    throw new ExpressionException($"at {SourceExpressionString}: 未知表达式节点");
-            }
-        }
-
         #endregion
 
-        #region private for parse
+        #region Parse
         private bool TryParse()
         {
             bool result;
@@ -437,12 +245,11 @@ namespace EasyExpression
                 switch (mode)
                 {
                     case MatchMode.Scope:
-                        matchScope = FindEnd('(', endTag, expression.SourceExpressionString, index);
+                        matchScope = FindEnd(currentChar, endTag, expression.SourceExpressionString, index);
                         expression.Status = matchScope.Status;
                         break;
                     case MatchMode.RelationSymbol:
                         var relationSymbolStr = GetFullSymbol(expression.SourceExpressionString, index, mode);
-                        ExpressionType = ExpressionType.Relation;
                         //去除可能存在的空字符
                         var relationSymbol = ConvertOperator(relationSymbolStr.Replace(" ", ""));
                         expression.Operators.Add(relationSymbol);
@@ -455,14 +262,12 @@ namespace EasyExpression
                         var logicSymbolStr = GetFullSymbol(expression.SourceExpressionString, index, mode);
                         var logicSymbol = ConvertOperator(logicSymbolStr.Replace(" ", ""));
                         //因为! 既可以单独修饰一个数据，当作逻辑非，也可以与=联合修饰两个数据，当作不等于，所以此处需要进行二次判定。如果是!=，则此符号为关系运算符
-                        ExpressionType = logicSymbol == Operator.UnEquals ? ExpressionType.Relation : ExpressionType.Logic;
                         expression.Operators.Add(logicSymbol);
                         expression.ElementType = ElementType.Expression;
                         index += logicSymbolStr.Length - 1;
                         lastBlock = mode;
                         continue;
                     case MatchMode.ArithmeticSymbol:
-                        ExpressionType = ExpressionType.Arithmetic;
                         var operatorSymbol = ConvertOperator(currentChar.ToString());
                         expression.Operators.Add(operatorSymbol);
                         expression.ElementType = ElementType.Expression;
@@ -490,7 +295,6 @@ namespace EasyExpression
                         paramList.ForEach(x =>
                         {
                             var paramExp = new Expression(x);
-                            //functionExp.ExpressionChildren.AddRange(paramExp.ExpressionChildren);
                             functionExp.ExpressionChildren.Add(paramExp);
                         });
                         //函数解析完毕后直接从函数后面位置继续
@@ -510,10 +314,6 @@ namespace EasyExpression
                                 return;
                             }
                             var dataExp = new Expression(str);
-                            if (dataExp.ExpressionType == ExpressionType.Logic)
-                            {
-                                ExpressionType = ExpressionType.Logic;
-                            }
                             if (dataMtachMode == MatchMode.Scope && currentChar == '-')
                             {
                                 //如果在Data分支下获取完整数据包含范围描述符号，即小括号，则认为这个负号修饰的是表达式，增加一个负号运算符
@@ -547,6 +347,30 @@ namespace EasyExpression
                 index = matchScope.EndIndex;
                 lastBlock = mode;
             }
+        }
+
+        private bool ParseStatus(Expression expression)
+        {
+            var result = true;
+            try
+            {
+                if (expression == null || !expression.Status)
+                {
+                    result = false;
+                    return result;
+                }
+                var status = new List<bool>();
+                GetExpressionStatus(expression, ref status);
+                if (status.Contains(false))
+                {
+                    result = false;
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+            return result;
         }
 
         private string GetFullSymbol(string exp, int startIndex, MatchMode matchMode)
@@ -700,6 +524,13 @@ namespace EasyExpression
                 for (; index < formula.Length; index++)
                 {
                     var currentChar = formula[index];
+                    //跳过转义符及后面一个字符
+                    if (currentChar == '\\')
+                    {
+                        result.ChildrenExpressionString += formula[index];
+                        result.ChildrenExpressionString += formula[index + 1];
+                        continue;
+                    }
                     // 第一次匹配到startTag不加层级，因为它的层级就是0
                     if (currentChar == startTag) //
                     {
@@ -784,6 +615,10 @@ namespace EasyExpression
             {
                 case '(':
                     return (MatchMode.Scope, ')');
+                case '"':
+                    return (MatchMode.Scope, '"');
+                case '\'':
+                    return (MatchMode.Scope, '\'');
                 case '[':
                     return (MatchMode.Function, ']');
                 case '&':
@@ -867,30 +702,6 @@ namespace EasyExpression
             }
         }
 
-        private bool ParseStatus(Expression expression)
-        {
-            var result = true;
-            try
-            {
-                if (expression == null || !expression.Status)
-                {
-                    result = false;
-                    return result;
-                }
-                var status = new List<bool>();
-                GetExpressionStatus(expression, ref status);
-                if (status.Contains(false))
-                {
-                    result = false;
-                }
-            }
-            catch
-            {
-                result = false;
-            }
-            return result;
-        }
-
         private void GetExpressionStatus(Expression expression, ref List<bool> status)
         {
             if (!status.Contains(expression.Status))
@@ -928,14 +739,12 @@ namespace EasyExpression
                 //如果只有同一种优先级的运算符，则说明当前层级可以顺序执行，不需要重构了，直接返回
                 if (count.Count() == 1)
                 {
-                    ExpressionType = GetExpressionType(Operators[0].GetOperatorObj().Level);
                     return;
                 }
                 //获取最高优先级，并重组
                 var level = count.Max();
                 //获取需要合并的优先级所有子表达式的操作符
                 var operators = GetTargetLevelOperators(Operators, level);
-                var type = GetExpressionType(level);
                 foreach (var list in operators)
                 {
                     //因为是倒序，所以起始位置是反的
@@ -947,29 +756,11 @@ namespace EasyExpression
                     list.ForEach(x => childrenOperators.Add(Operators[x]));
                     //合并为一个新的表达式
                     var newExp = BuildChildren(children, childrenOperators);
-                    newExp.ExpressionType = type;
                     //在表达式及操作符集合中删除合并的部分
                     ExpressionChildren.Insert(startIndex, newExp);
                     children.ForEach(x => ExpressionChildren.Remove(x));
                     list.ForEach(Operators.RemoveAt);
                 }
-            }
-        }
-
-        private static ExpressionType GetExpressionType(int level)
-        {
-            switch (level)
-            {
-                case 1:
-                case 2:
-                    return ExpressionType.Logic;
-                case 3:
-                    return ExpressionType.Relation;
-                case 4:
-                case 5:
-                    return ExpressionType.Arithmetic;
-                default:
-                    return ExpressionType.Unknown;
             }
         }
 
@@ -1042,7 +833,177 @@ namespace EasyExpression
 
         #endregion
 
-        #region private for Execute
+        #region Execute
+
+        private List<double> ExecuteChildren()
+        {
+            var childrenResults = new List<double>();
+            if (ExpressionChildren.Count == 0)
+            {
+                childrenResults.Add(ExecuteNode(this));
+                return childrenResults;
+            }
+            foreach (var childExp in ExpressionChildren)
+            {
+                childrenResults.Add(ExecuteNode(childExp));
+            }
+
+            /*
+             * 优先级
+             * 1. 算术运算
+             * 2. 关系运算
+             * 3. 逻辑运算
+             * 
+             * 【注】：因为针对优先级进行了表达式树的重构，所以每一层级的所有运算符都是同一优先级，因此，这里按照顺序执行即可
+             */
+            if (Operators.Count == 0)
+            {
+                return childrenResults;
+            }
+            var result = childrenResults.First();
+            //计算逻辑与和逻辑或,顺序执行
+            for (int i = 0; i < Operators.Count; i++)
+            {
+                //非运算和负数特殊，它只需要一个操作数就可完成计算，其他运算符至少需要两个
+                var value = Operators[i] == Operator.Not || Operators[i] == Operator.Negative ? childrenResults[i] : childrenResults[i + 1];
+                switch (Operators[i])
+                {
+                    case Operator.None:
+                        break;
+                    case Operator.And:
+                        result = result != 0d && value != 0d ? 1d : 0d;
+                        break;
+                    case Operator.Or:
+                        result = result != 0d || value != 0d ? 1d : 0d;
+                        break;
+                    case Operator.Not:
+                        result = value != 0d ? 0d : 1d;
+                        break;
+                    case Operator.Plus:
+                        result += value;
+                        break;
+                    case Operator.Subtract:
+                        result -= value;
+                        break;
+                    case Operator.Multiply:
+                        result *= value;
+                        break;
+                    case Operator.Divide:
+                        result /= value;
+                        break;
+                    case Operator.Mod:
+                        result %= value;
+                        break;
+                    case Operator.GreaterThan:
+                        //当前数据是否为日期，如果为日期则按日期比较方式
+                        result = result > value ? 1d : 0d;
+                        break;
+                    case Operator.LessThan:
+                        //当前数据是否为日期，如果为日期则按日期比较方式
+                        result = result < value ? 1d : 0d;
+                        break;
+                    case Operator.Equals:
+                        //当前数据是否为日期，如果为日期则按日期比较方式
+                        result = result == value ? 1d : 0d;
+                        break;
+                    case Operator.UnEquals:
+                        result = result - value != 0 ? 1d : 0d;
+                        break;
+                    case Operator.GreaterThanOrEquals:
+                        result = result >= value ? 1d : 0d;
+                        break;
+                    case Operator.LessThanOrEquals:
+                        result = result <= value ? 1d : 0d;
+                        break;
+                    case Operator.Negative:
+                        result = value * -1;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            childrenResults.Clear();
+            childrenResults.Add(result);
+            return childrenResults;
+        }
+
+        private double ExecuteNode(Expression childExp)
+        {
+            switch (childExp.ElementType)
+            {
+                case ElementType.Expression:
+                    return childExp.Execute();
+                case ElementType.Data:
+                    var value = Convert2DoubleValue(childExp.RealityString);
+                    return value;
+                case ElementType.Function:
+                    if (childExp.Function == null)
+                    {
+                        throw new ExpressionException($"at {SourceExpressionString}: 不存在函数实例{childExp.ExecuteType}");
+                    }
+                    double v = 0d;
+                    switch (childExp.ExecuteType)
+                    {
+                        case ExecuteType.None:
+                            v = childExp.Function.Invoke();
+                            break;
+                        case ExecuteType.Sum:
+                        case ExecuteType.Avg:
+                            var paramList = new List<double>();
+                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
+                            {
+                                foreach (var child in childExp.ExpressionChildren)
+                                {
+                                    child.ExecuteChildren().ForEach(x =>
+                                    {
+                                        paramList.Add(x);
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                var dataArray = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramList = dataArray.Select(x => Convert.ToDouble(x)).ToList();
+                            }
+                            v = childExp.Function.Invoke(paramList.ToArray());
+                            break;
+                        case ExecuteType.Contains:
+                        case ExecuteType.ContainsExcept:
+                        case ExecuteType.Equals:
+                        case ExecuteType.StartWith:
+                        case ExecuteType.EndWith:
+                        case ExecuteType.Different:
+                            var paramsList = new List<string>();
+                            if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
+                            {
+                                foreach (var child in childExp.ExpressionChildren)
+                                {
+                                    child.ExecuteChildren().ForEach(x =>
+                                    {
+                                        paramsList.Add(x.ToString());
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                            }
+                            if (paramsList.Count != 2)
+                            {
+                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                            }
+                            v = childExp.Function.Invoke(paramsList.ToArray());
+                            break;
+                        case ExecuteType.Customer:
+                            break;
+                    }
+                    return v;
+                default:
+                    throw new ExpressionException($"at {SourceExpressionString}: 未知表达式节点");
+            }
+        }
+
+        #endregion
 
         private double Convert2DoubleValue(string tag)
         {
@@ -1057,10 +1018,32 @@ namespace EasyExpression
                 case "0":
                     return 0d;
                 default:
+                    if (tag.EndsWith("%"))
+                    {
+                        return double.TryParse(tag.Trim('%'), out double percentResult) ? percentResult * 0.01d : throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值或布尔类型");
+                    }
                     return double.TryParse(tag, out double result) ? result : throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值或布尔类型");
             }
         }
 
-        #endregion
+        private void CheckExpression(Expression expression)
+        {
+            /*
+             * 1. 除了非运算只需要一个数据，其他的运算符至少需要2个数据
+             */
+            if (expression.Operators.Any())
+            {
+                var notOperatorCount = expression.Operators.Count(x => x == Operator.Not);
+                if (expression.ExpressionChildren.Count - (expression.Operators.Count - notOperatorCount) != 1)
+                {
+                    throw new ExpressionException("expression check error: data not match operator");
+                }
+            }
+
+            foreach (var child in expression.ExpressionChildren)
+            {
+                CheckExpression(child);
+            }
+        }
     }
 }
