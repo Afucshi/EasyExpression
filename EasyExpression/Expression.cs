@@ -25,7 +25,7 @@ namespace EasyExpression
             {
                 throw new ExpressionException("表达式不能为空");
             }
-            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("&&", "&").Replace("==", "=");
+            SourceExpressionString = expression.Trim().Replace("||", "|").Replace("\\\\", "\\").Replace("&&", "&").Replace("==", "=");
             ExpressionChildren = new List<Expression>();
             Operators = new List<Operator>();
             DataString = string.Empty;
@@ -307,6 +307,7 @@ namespace EasyExpression
                         var (str, dataMtachMode) = GetFullData(expression.SourceExpressionString, index, lastBlock);
                         if (!string.IsNullOrWhiteSpace(str))
                         {
+                            //排除转义符长度
                             if (str.Equals(expression.SourceExpressionString))
                             {
                                 expression.ElementType = ElementType.Data;
@@ -527,8 +528,8 @@ namespace EasyExpression
                     //跳过转义符及后面一个字符
                     if (currentChar == '\\')
                     {
+                        result.ChildrenExpressionString += formula[index++];
                         result.ChildrenExpressionString += formula[index];
-                        result.ChildrenExpressionString += formula[index + 1];
                         continue;
                     }
                     // 第一次匹配到startTag不加层级，因为它的层级就是0
