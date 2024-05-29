@@ -126,7 +126,7 @@ namespace EasyExpression
 
         public void LoadArgument()
         {
-            if (ElementType == ElementType.Data || ElementType == ElementType.Function && !string.IsNullOrEmpty(DataString) && double.TryParse(DataString, out var _))
+            if (ElementType == ElementType.Data || ElementType == ElementType.Function && !string.IsNullOrEmpty(DataString))
             {
                 RealityString = DataString;
             }

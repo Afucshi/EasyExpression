@@ -205,5 +205,33 @@ namespace EasyExpression.UnitTest
             var value = exp.Execute();
             Assert.AreEqual("20240529", value);
         }
+
+        [TestMethod]
+        public void RoundTest1()
+        {
+            var expStr = "[ROUND](11.34,1,-1)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(11.3, value);
+        }
+        [TestMethod]
+        public void RoundTest2()
+        {
+            var expStr = "[ROUND](11.34,1,0)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(11.3, value);
+        }
+        [TestMethod]
+        public void RoundTest3()
+        {
+            var expStr = "[ROUND](11.34,1,1)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(11.4, value);
+        }
     }
 }
