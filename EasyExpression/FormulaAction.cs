@@ -20,7 +20,7 @@ namespace EasyExpression
             return values.Select(x => Convert.ToDouble(x)).Average();
         }
 
-        [FunctionRemark("ROUND", "[ROUND]", "数学", "ROUND(a,b)\r\na=需要进行四舍五入的数字\r\nb=指定的位数，按此为进行精度处理", "双精度浮点数", "求平均值\r\n参数以英文逗号分隔，无数量限制")]
+        [FunctionRemark("ROUND", "[ROUND]", "数学", "ROUND(a,b,c)\r\na=需要进行精度处理的数值\r\nb=保留的小数位数，\r\nc=精度处理模式(1:进位,向上处理;0:四舍五入;-1:舍位,向下处理)", "双精度浮点数", "ROUND(3.14,1,1)，返回3.2\r\nROUND(3.19,1,-1)，返回3.1\r\nROUND(18.88,1,0)，返回18.9")]
         public static object Round(params object[] values)
         {
             if (double.TryParse((string)values[0], out var value))
@@ -78,7 +78,7 @@ namespace EasyExpression
         #endregion
 
         #region Time
-        [FunctionRemark("EDATE", "[EDATE]", "时间", "EDATE(a,b,c)\r\na=\"StartDate\"\r\nb=Unit", "日期值", "样例:EDATE(\"2019-10-10\",10,\"D\")，返回值代表指定日期之前或之后n天/月/年的日期\r\n参数按照顺序以英文逗号分隔")]
+        [FunctionRemark("EDATE", "[EDATE]", "时间", "EDATE(a,b,c)\r\na=\"StartDate\"\r\nb=Unit", "日期值", "EDATE(\"2019-10-10\",10,\"D\")，返回值代表指定日期之前或之后n天/月/年的日期\r\n参数按照顺序以英文逗号分隔")]
         public static object EDate(params object[] values)
         {
             if (DateTime.TryParse((string)values[0], out var startTime))
@@ -121,7 +121,7 @@ namespace EasyExpression
             throw new Exception("EDATE execute error");
         }
 
-        [FunctionRemark("EODATE", "[EODATE]", "时间", "EODATE(a,b,c)\r\na=\"StartDate\"\r\nb=Months", "日期值", "样例:EODATE(\"2019-10-10\",10,\"S\")，返回StartDate前后n个月最后一天或者第一天的日期\r\n参数按照顺序以英文逗号分隔\r\nC={\"S\" \"E”}")]
+        [FunctionRemark("EODATE", "[EODATE]", "时间", "EODATE(a,b,c)\r\na=\"StartDate\"\r\nb=Months", "日期值", "EODATE(\"2019-10-10\",10,\"S\")，返回StartDate前后n个月最后一天或者第一天的日期\r\n参数按照顺序以英文逗号分隔\r\nC={\"S\" \"E”}")]
         public static object EODate(params object[] values)
         {
             if (DateTime.TryParse((string)values[0], out var startTime))
@@ -144,13 +144,13 @@ namespace EasyExpression
             throw new Exception("EODate execute error");
         }
 
-        [FunctionRemark("NOWTIME", "[NOWTIME]", "时间", "无参数", "日期值", "样例:NOWTIME()，获取当前时间，默认返回今天的日期")]
+        [FunctionRemark("NOWTIME", "[NOWTIME]", "时间", "无参数", "日期值", "NOWTIME()，获取当前时间，默认返回今天的日期")]
         public static object NowTime(params object[] values)
         {
             return DateTime.Now;
         }
 
-        [FunctionRemark("TIMETOSTRING", "[TIMETOSTRING]", "时间", "TOSTRING(a,b)\r\na=日期、结果为日期的表达式、结果为日期的函数\r\nb=日期格式", "日期值", "样例:TOSTRING(\"2019-10-10\"，\"YYYY.DD.MM\")，返回特定格式")]
+        [FunctionRemark("TIMETOSTRING", "[TIMETOSTRING]", "时间", "TOSTRING(a,b)\r\na=日期、结果为日期的表达式、结果为日期的函数\r\nb=日期格式", "日期值", "TOSTRING(\"2019-10-10\"，\"YYYY.DD.MM\")，返回特定格式")]
         public static object TimeToString(params object[] values)
         {
             if (DateTime.TryParse((string)values[0], out var time))
