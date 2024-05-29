@@ -155,10 +155,10 @@ namespace EasyExpression
         * 
         * 如果是逻辑表达式，则返回值只有0或1，分别代表false和true
         */
-        public double Execute()
+        public object Execute()
         {
             var result = ExecuteChildren();
-            return (double)result.First();
+            return result.First();
         }
 
         public List<KeyValuePair<string, ElementType>> GetAllParams()
@@ -1090,13 +1090,16 @@ namespace EasyExpression
                             }
                             else
                             {
-                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.FunctionType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramsList = (childExp.RealityString?.Split(',').ToList());
                             }
-                            if (paramsList.Count != 2)
+                            try
+                            {
+                                v = childExp.Function.Invoke(paramsList?.ToArray());
+                            }
+                            catch
                             {
                                 throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.FunctionType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
                             }
-                            v = childExp.Function.Invoke(paramsList.ToArray());
                             break;
                     }
                     return v;
@@ -1132,7 +1135,8 @@ namespace EasyExpression
                     {
                         return time;
                     }
-                    throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值、日期或布尔类型");
+                    return tag;
+                    //throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值、日期或布尔类型");
             }
         }
 

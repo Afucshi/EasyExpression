@@ -135,7 +135,75 @@ namespace EasyExpression.UnitTest
             var exp = new Expression(expStr);
             exp.LoadArgument(dic);
             var value = exp.Execute();
-            Assert.AreEqual(11d, value);
+            Assert.AreEqual(1d, value);
+        }
+
+        [TestMethod]
+        public void DateMoreThenTest()
+        {
+            var expStr = "'2024-05-27' > a";
+            var dic = new Dictionary<string, string>
+            {
+                { "a","2024-05-26"},
+            };
+            var exp = new Expression(expStr);
+            exp.LoadArgument(dic);
+            var value = exp.Execute();
+            Assert.AreEqual(1d, value);
+        }
+
+        [TestMethod]
+        public void DateLessThanTest()
+        {
+            var expStr = "'2024-05-27' < a";
+            var dic = new Dictionary<string, string>
+            {
+                { "a","2024-05-26"},
+            };
+            var exp = new Expression(expStr);
+            exp.LoadArgument(dic);
+            var value = exp.Execute();
+            Assert.AreEqual(0d, value);
+        }
+
+        [TestMethod]
+        public void EDATETest()
+        {
+            var expStr = "[TIMETOSTRING]([EDATE]('2024-05-27',2,D),yyyyMMdd)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual("20240529", value);
+        }
+
+        [TestMethod]
+        public void EODateStartTest()
+        {
+            var expStr = "[TIMETOSTRING]([EODATE]('2024-05-27',2,S),yyyyMMdd)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual("20240701", value);
+        }
+
+        [TestMethod]
+        public void EODateEndTest()
+        {
+            var expStr = "[TIMETOSTRING]([EODATE]('2024-05-27',2,E),yyyyMMdd)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual("20240731", value);
+        }
+
+        [TestMethod]
+        public void NowTimeTest()
+        {
+            var expStr = "[TIMETOSTRING]([NOWTIME](),yyyyMMdd)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual("20240529", value);
         }
     }
 }
