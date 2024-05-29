@@ -61,7 +61,7 @@ namespace EasyExpression
         /// <summary>
         /// 函数类型
         /// </summary>
-        public ExecuteType ExecuteType { get; set; }
+        public FunctionType FunctionType { get; set; }
         /// <summary>
         /// 若表达式为函数类型,则可以调用此委托来计算函数输出值
         /// </summary>    
@@ -97,7 +97,8 @@ namespace EasyExpression
                         }
                     }
                     RealityString = DataString;
-                    zeroInit = ExecuteType == ExecuteType.Avg || ExecuteType == ExecuteType.Sum;
+                    //集合函数空值默认初始化为0
+                    zeroInit = FunctionType == FunctionType.Avg || FunctionType == FunctionType.Sum;
                 }
                 else
                 {
@@ -157,7 +158,7 @@ namespace EasyExpression
         public double Execute()
         {
             var result = ExecuteChildren();
-            return result.First();
+            return (double)result.First();
         }
 
         public List<KeyValuePair<string, ElementType>> GetAllParams()
@@ -284,7 +285,7 @@ namespace EasyExpression
                         var functionExp = new Expression
                         {
                             ElementType = ElementType.Function,
-                            ExecuteType = executeType,
+                            FunctionType = executeType,
                             Function = function,
                             FunctionName = executeType.ToString(),
                             SourceExpressionString = functionStr,
@@ -307,7 +308,7 @@ namespace EasyExpression
                         var (str, dataMtachMode) = GetFullData(expression.SourceExpressionString, index, lastBlock);
                         if (!string.IsNullOrWhiteSpace(str))
                         {
-                            //排除转义符长度
+                            //todo 排除转义符长度
                             if (str.Equals(expression.SourceExpressionString))
                             {
                                 expression.ElementType = ElementType.Data;
@@ -437,26 +438,36 @@ namespace EasyExpression
             }
             return (result, MatchMode.Data);
         }
-        private (ExecuteType executeType, Function function) GetFunctionType(string key)
+        private (FunctionType executeType, Function function) GetFunctionType(string key)
         {
             switch (key.ToLower())
             {
                 case "sum":
-                    return (ExecuteType.Sum, FormulaAction.Sum);
+                    return (FunctionType.Sum, FormulaAction.Sum);
                 case "avg":
-                    return (ExecuteType.Avg, FormulaAction.Avg);
+                    return (FunctionType.Avg, FormulaAction.Avg);
                 case "contains":
-                    return (ExecuteType.Contains, FormulaAction.Contains);
+                    return (FunctionType.Contains, FormulaAction.Contains);
                 case "excluding":
-                    return (ExecuteType.ContainsExcept, FormulaAction.Excluding);
+                    return (FunctionType.ContainsExcept, FormulaAction.Excluding);
                 case "equals":
-                    return (ExecuteType.Equals, FormulaAction.Equals);
+                    return (FunctionType.Equals, FormulaAction.Equals);
                 case "startwith":
-                    return (ExecuteType.StartWith, FormulaAction.StartWith);
+                    return (FunctionType.StartWith, FormulaAction.StartWith);
                 case "endwith":
-                    return (ExecuteType.EndWith, FormulaAction.EndWith);
+                    return (FunctionType.EndWith, FormulaAction.EndWith);
                 case "different":
-                    return (ExecuteType.Different, FormulaAction.Different);
+                    return (FunctionType.Different, FormulaAction.Different);
+                case "round":
+                    return (FunctionType.Round, FormulaAction.Round);
+                case "edate":
+                    return (FunctionType.EDate, FormulaAction.EDate);
+                case "eodate":
+                    return (FunctionType.EODate, FormulaAction.EODate);
+                case "nowtime":
+                    return (FunctionType.NowTime, FormulaAction.NowTime);
+                case "timetostring":
+                    return (FunctionType.TimeToString, FormulaAction.TimeToString);
                 // 自定义函数实现
                 default:
                     throw new ExpressionException($"at {SourceExpressionString}: {key} 函数未定义");
@@ -789,7 +800,7 @@ namespace EasyExpression
                 ElementType = ElementType.Expression,
                 SourceExpressionString = dataString,
                 Status = true,
-                ExecuteType = ExecuteType.None
+                FunctionType = FunctionType.None
             };
             return exp;
         }
@@ -836,9 +847,9 @@ namespace EasyExpression
 
         #region Execute
 
-        private List<double> ExecuteChildren()
+        private List<object> ExecuteChildren()
         {
-            var childrenResults = new List<double>();
+            var childrenResults = new List<object>();
             if (ExpressionChildren.Count == 0)
             {
                 childrenResults.Add(ExecuteNode(this));
@@ -872,52 +883,96 @@ namespace EasyExpression
                     case Operator.None:
                         break;
                     case Operator.And:
-                        result = result != 0d && value != 0d ? 1d : 0d;
+                        result = (double)result != 0d && (double)value != 0d ? 1d : 0d;
                         break;
                     case Operator.Or:
-                        result = result != 0d || value != 0d ? 1d : 0d;
+                        result = (double)result != 0d || (double)value != 0d ? 1d : 0d;
                         break;
                     case Operator.Not:
-                        result = value != 0d ? 0d : 1d;
+                        result = (double)value != 0d ? 0d : 1d;
                         break;
                     case Operator.Plus:
-                        result += value;
+                        result = (double)result + (double)value;
                         break;
                     case Operator.Subtract:
-                        result -= value;
+                        result = (double)result - (double)value;
                         break;
                     case Operator.Multiply:
-                        result *= value;
+                        result = (double)result * (double)value;
                         break;
                     case Operator.Divide:
-                        result /= value;
+                        result = (double)result / (double)value;
                         break;
                     case Operator.Mod:
-                        result %= value;
+                        result = (double)result % (double)value;
                         break;
                     case Operator.GreaterThan:
                         //当前数据是否为日期，如果为日期则按日期比较方式
-                        result = result > value ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = (double)result > (double)value ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result > (DateTime)value ? 1d : 0d;
+                        }
                         break;
                     case Operator.LessThan:
                         //当前数据是否为日期，如果为日期则按日期比较方式
-                        result = result < value ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = (double)result < (double)value ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result < (DateTime)value ? 1d : 0d;
+                        }
+
                         break;
                     case Operator.Equals:
                         //当前数据是否为日期，如果为日期则按日期比较方式
-                        result = result == value ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = result == value ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result == (DateTime)value ? 1d : 0d;
+                        }
+
                         break;
                     case Operator.UnEquals:
-                        result = result - value != 0 ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = (double)result - (double)value != 0 ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result == (DateTime)value ? 0d : 1d;
+                        }
                         break;
                     case Operator.GreaterThanOrEquals:
-                        result = result >= value ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = (double)result >= (double)value ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result >= (DateTime)value ? 1d : 0d;
+                        }
                         break;
                     case Operator.LessThanOrEquals:
-                        result = result <= value ? 1d : 0d;
+                        if (!(result is DateTime) && !(value is DateTime))
+                        {
+                            result = (double)result <= (double)value ? 1d : 0d;
+                        }
+                        else
+                        {
+                            result = (DateTime)result <= (DateTime)value ? 1d : 0d;
+                        }
                         break;
                     case Operator.Negative:
-                        result = value * -1;
+                        result = (double)value * -1;
                         break;
                     default:
                         break;
@@ -928,29 +983,30 @@ namespace EasyExpression
             return childrenResults;
         }
 
-        private double ExecuteNode(Expression childExp)
+        private object ExecuteNode(Expression childExp)
         {
             switch (childExp.ElementType)
             {
                 case ElementType.Expression:
                     return childExp.Execute();
                 case ElementType.Data:
-                    var value = Convert2DoubleValue(childExp.RealityString);
+                    var value = Convert2ObjectValue(childExp.RealityString);
                     return value;
                 case ElementType.Function:
                     if (childExp.Function == null)
                     {
-                        throw new ExpressionException($"at {SourceExpressionString}: 不存在函数实例{childExp.ExecuteType}");
+                        throw new ExpressionException($"at {SourceExpressionString}: 不存在函数实例{childExp.FunctionType}");
                     }
-                    double v = 0d;
-                    switch (childExp.ExecuteType)
+                    object v = 0d;
+                    switch (childExp.FunctionType)
                     {
-                        case ExecuteType.None:
+                        case FunctionType.None:
                             v = childExp.Function.Invoke();
                             break;
-                        case ExecuteType.Sum:
-                        case ExecuteType.Avg:
-                            var paramList = new List<double>();
+                        //集合函数(参数不固定)
+                        case FunctionType.Sum:
+                        case FunctionType.Avg:
+                            var paramList = new List<object>();
                             if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
                             {
                                 foreach (var child in childExp.ExpressionChildren)
@@ -963,17 +1019,24 @@ namespace EasyExpression
                             }
                             else
                             {
-                                var dataArray = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
-                                paramList = dataArray.Select(x => Convert.ToDouble(x)).ToList();
+                                var dataArray = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.FunctionType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramList = dataArray.Select(x => (object)x).ToList();
                             }
                             v = childExp.Function.Invoke(paramList.ToArray());
                             break;
-                        case ExecuteType.Contains:
-                        case ExecuteType.ContainsExcept:
-                        case ExecuteType.Equals:
-                        case ExecuteType.StartWith:
-                        case ExecuteType.EndWith:
-                        case ExecuteType.Different:
+                        //固定参数函数
+                        case FunctionType.Customer:
+                        case FunctionType.EDate:
+                        case FunctionType.EODate:
+                        case FunctionType.NowTime:
+                        case FunctionType.TimeToString:
+                        case FunctionType.Round:
+                        case FunctionType.Contains:
+                        case FunctionType.ContainsExcept:
+                        case FunctionType.Equals:
+                        case FunctionType.StartWith:
+                        case FunctionType.EndWith:
+                        case FunctionType.Different:
                             var paramsList = new List<string>();
                             if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
                             {
@@ -987,15 +1050,13 @@ namespace EasyExpression
                             }
                             else
                             {
-                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                paramsList = (childExp.RealityString?.Split(',').ToList()) ?? throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.FunctionType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
                             }
                             if (paramsList.Count != 2)
                             {
-                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.ExecuteType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
+                                throw new ExpressionException($"at {SourceExpressionString}: 函数 {childExp.FunctionType} 形参 {childExp.DataString} 映射到实参 {childExp.RealityString} 错误");
                             }
                             v = childExp.Function.Invoke(paramsList.ToArray());
-                            break;
-                        case ExecuteType.Customer:
                             break;
                     }
                     return v;
@@ -1006,7 +1067,7 @@ namespace EasyExpression
 
         #endregion
 
-        private double Convert2DoubleValue(string tag)
+        private object Convert2ObjectValue(string tag)
         {
             switch (tag)
             {
@@ -1021,9 +1082,17 @@ namespace EasyExpression
                 default:
                     if (tag.EndsWith("%"))
                     {
-                        return double.TryParse(tag.Trim('%'), out double percentResult) ? percentResult * 0.01d : throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值或布尔类型");
+                        return double.TryParse(tag.Trim('%'), out double percentResult) ? percentResult * 0.01d : throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值类型");
                     }
-                    return double.TryParse(tag, out double result) ? result : throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值或布尔类型");
+                    if (double.TryParse(tag, out double result))
+                    {
+                        return result;
+                    }
+                    else if (DateTime.TryParse(tag, out var time))
+                    {
+                        return time;
+                    }
+                    throw new ExpressionException($"at {SourceExpressionString}: {tag} 不是数值、日期或布尔类型");
             }
         }
 

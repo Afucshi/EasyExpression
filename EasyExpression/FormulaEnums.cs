@@ -20,7 +20,7 @@
         Reference = 3,
     }
 
-    public enum ExecuteType
+    public enum FunctionType
     {
         /// <summary>
         /// 非函数
@@ -59,9 +59,29 @@
         /// </summary>
         Different = 8,
         /// <summary>
+        /// 时间加减
+        /// </summary>
+        EDate = 9,
+        /// <summary>
+        /// 取指定月的第一天或最后一天日期
+        /// </summary>
+        EODate = 10,
+        /// <summary>
+        /// 当前时间
+        /// </summary>
+        NowTime = 11,
+        /// <summary>
+        /// 时间转字符串
+        /// </summary>
+        TimeToString = 12,
+        /// <summary>
+        /// 处理精度
+        /// </summary>
+        Round = 13,
+        /// <summary>
         /// 自定义函数(delegate double Function(params object[] values))
         /// </summary>
-        Customer = 9
+        Customer = 100
     }
     public enum MatchMode
     {
