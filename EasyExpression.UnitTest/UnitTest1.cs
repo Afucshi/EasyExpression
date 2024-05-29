@@ -123,5 +123,19 @@ namespace EasyExpression.UnitTest
             var value = exp.Execute();
             Assert.AreEqual(11d, value);
         }
+
+        [TestMethod]
+        public void DateCompareTest()
+        {
+            var expStr = "'2024-05-27' == a";
+            var dic = new Dictionary<string, string>
+            {
+                { "a","2024-05-27"},
+            };
+            var exp = new Expression(expStr);
+            exp.LoadArgument(dic);
+            var value = exp.Execute();
+            Assert.AreEqual(11d, value);
+        }
     }
 }

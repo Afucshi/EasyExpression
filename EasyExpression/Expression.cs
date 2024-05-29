@@ -246,7 +246,24 @@ namespace EasyExpression
                 switch (mode)
                 {
                     case MatchMode.Scope:
-                        matchScope = FindEnd(currentChar, endTag, expression.SourceExpressionString, index);
+                        if (currentChar == endTag)
+                        {
+                            //'' 或者 "" 实际上应该认作数据类型
+                            matchScope = FindEnd(currentChar, expression.SourceExpressionString, index);
+                            var dataExp = new Expression
+                            {
+                                ElementType = ElementType.Data,
+                                SourceExpressionString = $"{currentChar}{matchScope.ChildrenExpressionString}{endTag}",
+                                DataString = matchScope.ChildrenExpressionString
+                            };
+                            expression.ExpressionChildren.Add(dataExp);
+                            index = matchScope.EndIndex;
+                            continue;
+                        }
+                        else
+                        {
+                            matchScope = FindEnd(currentChar, endTag, expression.SourceExpressionString, index);
+                        }
                         expression.Status = matchScope.Status;
                         break;
                     case MatchMode.RelationSymbol:
@@ -522,25 +539,25 @@ namespace EasyExpression
         /// </summary>
         /// <param name="startTag"></param>
         /// <param name="endTag"></param>
-        /// <param name="formula"></param>
+        /// <param name="expression"></param>
         /// <param name="index"></param>
         /// <param name="containsStartTag"></param>
         /// <returns></returns>
-        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string formula, int index)
+        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char startTag, char? endTag, string expression, int index)
         {
             var result = (Status: true, EndIndex: 0, ChildrenExpressionString: "");
             try
             {
                 int currentLevel = 0;
                 int? endIndex = null;
-                for (; index < formula.Length; index++)
+                for (; index < expression.Length; index++)
                 {
-                    var currentChar = formula[index];
+                    var currentChar = expression[index];
                     //跳过转义符及后面一个字符
                     if (currentChar == '\\')
                     {
-                        result.ChildrenExpressionString += formula[index++];
-                        result.ChildrenExpressionString += formula[index];
+                        result.ChildrenExpressionString += expression[index++];
+                        result.ChildrenExpressionString += expression[index];
                         continue;
                     }
                     // 第一次匹配到startTag不加层级，因为它的层级就是0
@@ -571,6 +588,29 @@ namespace EasyExpression
                 else
                 {
                     result.Status = false;
+                }
+            }
+            catch
+            {
+                result.Status = false;
+            }
+            return result;
+        }
+
+        private (bool Status, int EndIndex, string ChildrenExpressionString) FindEnd(char tag, string expression, int index)
+        {
+            var result = (Status: true, EndIndex: 0, ChildrenExpressionString: "");
+            try
+            {
+                for (var i = index + 1; i < expression.Length; i++)
+                {
+                    if (expression[i] == tag)
+                    {
+                        result.EndIndex = i;
+                        result.Status = true;
+                        break;
+                    }
+                    result.ChildrenExpressionString += expression[i];
                 }
             }
             catch
