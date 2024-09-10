@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 
 namespace EasyExpression.UnitTest
@@ -203,7 +204,7 @@ namespace EasyExpression.UnitTest
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Execute();
-            Assert.AreEqual("20240529", value);
+            Assert.AreEqual(DateTime.Now.ToString("yyyyMMdd"), value);
         }
 
         [TestMethod]
