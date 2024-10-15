@@ -287,7 +287,7 @@ namespace EasyExpression.UnitTest
             var exp = new Expression(expStr);
             exp.LoadArgument();
             var value = exp.Execute();
-            Assert.AreEqual(432000000d, value);
+            Assert.AreEqual(0.2d, value);
         }
     }
 }

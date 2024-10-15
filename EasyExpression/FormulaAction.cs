@@ -178,7 +178,7 @@ namespace EasyExpression
         #endregion
 
         #region TimeSpan
-        [FunctionRemark("DAYS", "[DAYS]", "天数", "DAYS(time1-time2)", "时间段", "DAYS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的天数\r\n参数为两个时间相减的表达式")]
+        [FunctionRemark("DAYS", "[DAYS]", "时间段", "DAYS(time1-time2)", "天数", "DAYS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的天数\r\n参数为两个时间相减的表达式")]
         public static object Days(params object[] values)
         {
             if (values[0] is TimeSpan timeSpan)
@@ -187,7 +187,7 @@ namespace EasyExpression
             }
             throw new Exception("Days execute error");
         }
-        [FunctionRemark("HOURS", "[HOURS]", "小时数", "HOURS(time1-time2", "时间段", "HOURS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的小时数\r\n参数为两个时间相减的表达式")]
+        [FunctionRemark("HOURS", "[HOURS]", "时间段", "HOURS(time1-time2", "小时数", "HOURS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的小时数\r\n参数为两个时间相减的表达式")]
         public static object Hours(params object[] values)
         {
             if (values[0] is TimeSpan timeSpan)
@@ -196,7 +196,7 @@ namespace EasyExpression
             }
             throw new Exception("Hours execute error");
         }
-        [FunctionRemark("MINUTES", "[MINUTES]", "分钟数", "MINUTES(time1-time2)", "时间段", "MINUTES('2019-10-10' - '2019-10-05')，返回值代表时间段对应的分钟数\r\n参数为两个时间相减的表达式")]
+        [FunctionRemark("MINUTES", "[MINUTES]", "时间段", "MINUTES(time1-time2)", "分钟数", "MINUTES('2019-10-10' - '2019-10-05')，返回值代表时间段对应的分钟数\r\n参数为两个时间相减的表达式")]
         public static object Minutes(params object[] values)
         {
             if (values[0] is TimeSpan timeSpan)
@@ -205,7 +205,7 @@ namespace EasyExpression
             }
             throw new Exception("Minutes execute error");
         }
-        [FunctionRemark("SECONDS", "[SECONDS]", "秒数", "SECONDS(time1-time2)", "时间段", "SECONDS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的秒数\r\n参数为两个时间相减的表达式")]
+        [FunctionRemark("SECONDS", "[SECONDS]", "时间段", "SECONDS(time1-time2)", "秒数", "SECONDS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的秒数\r\n参数为两个时间相减的表达式")]
         public static object Seconds(params object[] values)
         {
             if (values[0] is TimeSpan timeSpan)
@@ -214,7 +214,7 @@ namespace EasyExpression
             }
             throw new Exception("Seconds execute error");
         }
-        [FunctionRemark("MILLSECONDS", "[MILLSECONDS]", "毫秒数", "MILLSECONDS(time1-time2)", "时间段", "MILLSECONDS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的毫秒数\r\n参数为两个时间相减的表达式")]
+        [FunctionRemark("MILLSECONDS", "[MILLSECONDS]", "时间段", "MILLSECONDS(time1-time2)", "毫秒数", "MILLSECONDS('2019-10-10' - '2019-10-05')，返回值代表时间段对应的毫秒数\r\n参数为两个时间相减的表达式")]
         public static object MillSeconds(params object[] values)
         {
             if (values[0] is TimeSpan timeSpan)
