@@ -79,6 +79,26 @@
         /// </summary>
         Round = 13,
         /// <summary>
+        /// 获取天数
+        /// </summary>
+        Days = 14,
+        /// <summary>
+        /// 获取小时数
+        /// </summary>
+        Hours = 15,
+        /// <summary>
+        /// 获取分钟数
+        /// </summary>
+        Minutes = 16,
+        /// <summary>
+        /// 获取秒数
+        /// </summary>
+        Seconds = 17,
+        /// <summary>
+        /// 获取毫秒数
+        /// </summary>
+        MillSeconds = 18,
+        /// <summary>
         /// 自定义函数(delegate double Function(params object[] values))
         /// </summary>
         Customer = 100

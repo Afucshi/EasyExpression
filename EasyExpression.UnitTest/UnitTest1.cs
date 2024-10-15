@@ -234,5 +234,51 @@ namespace EasyExpression.UnitTest
             var value = exp.Execute();
             Assert.AreEqual(11.4, value);
         }
+
+        [TestMethod]
+        public void TimeSpanDays()
+        {
+            var expStr = "[DAYS]('2024-10-15'-'2024-10-10')";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(5d, value);
+        }
+        [TestMethod]
+        public void TimeSpanHours()
+        {
+            var expStr = "[HOURS]('2024-10-15'-'2024-10-10')";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(120d, value);
+        }
+        [TestMethod]
+        public void TimeSpanMinutes()
+        {
+            var expStr = "[MINUTES]('2024-10-15'-'2024-10-10')";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(7200d, value);
+        }
+        [TestMethod]
+        public void TimeSpanSeconds()
+        {
+            var expStr = "[SECONDS]('2024-10-15'-'2024-10-10')";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(432000d, value);
+        }
+        [TestMethod]
+        public void TimeSpanMillSeconds()
+        {
+            var expStr = "[MILLSECONDS]('2024-10-15'-'2024-10-10')";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(432000000d, value);
+        }
     }
 }

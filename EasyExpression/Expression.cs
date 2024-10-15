@@ -257,6 +257,7 @@ namespace EasyExpression
                                 DataString = matchScope.ChildrenExpressionString
                             };
                             expression.ExpressionChildren.Add(dataExp);
+                            lastBlock = MatchMode.Data;
                             index = matchScope.EndIndex;
                             continue;
                         }
@@ -485,6 +486,16 @@ namespace EasyExpression
                     return (FunctionType.NowTime, FormulaAction.NowTime);
                 case "timetostring":
                     return (FunctionType.TimeToString, FormulaAction.TimeToString);
+                case "days":
+                    return (FunctionType.Days, FormulaAction.Days);
+                case "hours":
+                    return (FunctionType.Hours, FormulaAction.Hours);
+                case "minutes":
+                    return (FunctionType.Minutes, FormulaAction.Minutes);
+                case "seconds":
+                    return (FunctionType.Seconds, FormulaAction.Seconds);
+                case "millseconds":
+                    return (FunctionType.MillSeconds, FormulaAction.MillSeconds);
                 // 自定义函数实现
                 default:
                     throw new ExpressionException($"at {SourceExpressionString}: {key} 函数未定义");
@@ -935,7 +946,14 @@ namespace EasyExpression
                         result = (double)result + (double)value;
                         break;
                     case Operator.Subtract:
-                        result = (double)result - (double)value;
+                        if ((result is DateTime) && (value is DateTime))
+                        {
+                            result = (DateTime)result - (DateTime)value;
+                        }
+                        else
+                        {
+                            result = (double)result - (double)value;
+                        }
                         break;
                     case Operator.Multiply:
                         result = (double)result * (double)value;
@@ -1077,20 +1095,25 @@ namespace EasyExpression
                         case FunctionType.StartWith:
                         case FunctionType.EndWith:
                         case FunctionType.Different:
-                            var paramsList = new List<string>();
+                        case FunctionType.Days:
+                        case FunctionType.Hours:
+                        case FunctionType.Minutes:
+                        case FunctionType.Seconds:
+                        case FunctionType.MillSeconds:
+                            var paramsList = new List<object>();
                             if (childExp.ExpressionChildren.Count(x => x.ElementType != ElementType.Data) != 0)
                             {
                                 foreach (var child in childExp.ExpressionChildren)
                                 {
                                     child.ExecuteChildren().ForEach(x =>
                                     {
-                                        paramsList.Add(x.ToString());
+                                        paramsList.Add(x);
                                     });
                                 }
                             }
                             else
                             {
-                                paramsList = (childExp.RealityString?.Split(',').ToList());
+                                paramsList = (childExp.RealityString?.Split(',').Select(x => (object)x).ToList());
                             }
                             try
                             {
