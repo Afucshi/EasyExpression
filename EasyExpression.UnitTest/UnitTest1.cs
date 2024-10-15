@@ -280,5 +280,14 @@ namespace EasyExpression.UnitTest
             var value = exp.Execute();
             Assert.AreEqual(432000000d, value);
         }
+        [TestMethod]
+        public void RoundAndTimeSpan()
+        {
+            var expStr = "[ROUND]([DAYS]('2024-10-15'-'2024-10-10') / 30,1,0)";
+            var exp = new Expression(expStr);
+            exp.LoadArgument();
+            var value = exp.Execute();
+            Assert.AreEqual(432000000d, value);
+        }
     }
 }

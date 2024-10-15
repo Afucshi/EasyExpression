@@ -23,20 +23,30 @@ namespace EasyExpression
         [FunctionRemark("ROUND", "[ROUND]", "数学", "ROUND(a,b,c)\r\na=需要进行精度处理的数值\r\nb=保留的小数位数，\r\nc=精度处理模式(1:进位,向上处理;0:四舍五入;-1:舍位,向下处理)", "双精度浮点数", "ROUND(3.14,1,1)，返回3.2\r\nROUND(3.19,1,-1)，返回3.1\r\nROUND(18.88,1,0)，返回18.9")]
         public static object Round(params object[] values)
         {
-            if (double.TryParse((string)values[0], out var value))
+            double value;
+            if (values[0] is double v)
             {
-                var accuracy = Convert.ToInt32((string)values[1]);
-                var mode = Convert.ToInt32(values[2]);
-                var delta = 5 / Math.Pow(10, accuracy + 1);
-                switch (mode)
-                {
-                    case -1:
-                        return Math.Round(value - delta, accuracy);
-                    case 0:
-                        return Math.Round(value, accuracy);
-                    case 1:
-                        return Math.Round(value + delta, accuracy);
-                }
+                value = v;
+            }
+            else if (double.TryParse(values[0].ToString(), out var v1))
+            {
+                value = v1;
+            }
+            else
+            {
+                throw new Exception("ROUND execute error");
+            }
+            var accuracy = Convert.ToInt32(values[1]);
+            var mode = Convert.ToInt32(values[2]);
+            var delta = 5 / Math.Pow(10, accuracy + 1);
+            switch (mode)
+            {
+                case -1:
+                    return Math.Round(value - delta, accuracy);
+                case 0:
+                    return Math.Round(value, accuracy);
+                case 1:
+                    return Math.Round(value + delta, accuracy);
             }
             throw new Exception("ROUND execute error");
         }
